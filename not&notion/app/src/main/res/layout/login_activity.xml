@@ -5,7 +5,8 @@ xmlns:android="http://schemas.android.com/apk/res/android"
 xmlns:app="http://schemas.android.com/apk/res-auto"
 android:layout_width="match_parent"
 android:layout_height="match_parent"
-android:padding="32dp">
+android:padding="32dp"
+ >
 
 <!-- Logo arriba -->
 <ImageView
@@ -27,7 +28,7 @@ android:padding="32dp">
     android:layout_marginTop="24dp"
     app:layout_constraintStart_toStartOf="parent"/>
 
-<!-- Botón cambio de idioma al lado del TextView usuario -->
+<!-- CAMBIAR IDIOMA-->
 <ImageButton
     android:id="@+id/btn_language"
     android:layout_width="40dp"
@@ -47,6 +48,7 @@ android:padding="32dp">
     android:inputType="textEmailAddress"
     app:layout_constraintTop_toBottomOf="@id/user"
     android:layout_marginTop="8dp"
+    style="@style/MyEditText"
     app:layout_constraintStart_toStartOf="parent"
     app:layout_constraintEnd_toEndOf="parent"/>
 
@@ -66,6 +68,7 @@ android:padding="32dp">
     android:layout_width="0dp"
     android:layout_height="wrap_content"
     android:inputType="textPassword"
+    style="@style/MyEditText"
     app:layout_constraintTop_toBottomOf="@id/password_label"
     android:layout_marginTop="8dp"
     app:layout_constraintStart_toStartOf="parent"
@@ -79,8 +82,10 @@ android:padding="32dp">
     android:text="@string/log_in"
     app:layout_constraintTop_toBottomOf="@id/password"
     android:layout_marginTop="24dp"
+    style="@style/MyButton"
     app:layout_constraintStart_toStartOf="parent"
-    app:layout_constraintEnd_toEndOf="parent"/>
+    app:layout_constraintEnd_toEndOf="parent"
+/>
 
 <!-- Texto “nuevo usuario” -->
 <TextView
