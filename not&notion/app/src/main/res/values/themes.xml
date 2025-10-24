@@ -8,17 +8,10 @@
         <!-- Botón global -->
         <item name="buttonStyle">@style/MyButton</item>
 
-        <!-- EditText global (TextInputLayout) -->
-        <item name="textInputStyle">@style/MyEditText</item>
     </style>
     <style name="MyButton" parent="Widget.MaterialComponents.Button">
         <item name="backgroundTint">@color/light_brown</item>
-        <item name="android:textColor">@color/black</item>
-        <item name="cornerRadius">12dp</item>
-    </style>
-    <style name="MyEditText" parent="Widget.MaterialComponents.Button">
-        <item name="backgroundTint">@color/light_yellow</item>
-        <item name="android:textColor">@color/black</item>
+        <item name="android:textColor">@color/text_button</item>
         <item name="cornerRadius">12dp</item>
     </style>
     <!-- Tema final -->

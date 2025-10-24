@@ -4,7 +4,8 @@
     <color name="black">#FF000000</color>
     <color name="cream">#FFF6E9</color>
     <color name="brown">#8B5A2B</color>
+    <color name="text_button">#FF4E2917</color>
     <color name="light_brown">#DDBA99</color>
     <color name="bg">#FFFEFD</color>
-    <color name="light_yellow">#FFFdd87c</color>
+    <color name="light_yellow">#80Fdd87c</color>
 </resources>
