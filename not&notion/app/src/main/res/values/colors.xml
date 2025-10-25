@@ -1,9 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="white">#FFFFFF</color>
+    <color name="white">#ffFFFFFF</color>
     <color name="black">#FF000000</color>
-    <color name="cream">#FFF6E9</color>
-    <color name="brown">#8B5A2B</color>
-    <color name="light_brown">#DDBA99</color>
-    <color name="bg">#FFFEFD</color>
+    <color name="cream">#ffFFF6E9</color>
+    <!--COLORES PARA TEXTO-->
+    <color name="text_button">#FF4E2917</color>
+    <color name="brown">#ff8B5A2B</color>
+    <!--COLORES PARA botones-->
+    <color name="light_brown">#ffDDBA99</color>
+    <!--COLORES fondo-->
+    <color name="bg">#FFf2edea</color>
+    <!--COLORES PARA EDITEXT-->
+    <color name="light_yellow">#80Fdd87c</color>
 </resources>
