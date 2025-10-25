@@ -1,6 +1,10 @@
 package es.fdi.ucm.pad.notnotion.ui.user_logging;
 import android.content.Intent;
 import android.os.Bundle;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.Toast;
+
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -8,6 +12,7 @@ import com.firebase.ui.auth.AuthUI;
 import com.firebase.ui.auth.FirebaseAuthUIActivityResultContract;
 import com.firebase.ui.auth.data.model.FirebaseAuthUIAuthenticationResult;
 import com.firebase.ui.auth.IdpResponse;
+import com.google.android.gms.common.SignInButton;
 import com.google.firebase.auth.ActionCodeSettings;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -21,6 +26,10 @@ import es.fdi.ucm.pad.notnotion.ui.main.MainActivity;
 public class LoginActivity extends AppCompatActivity {
 
     // 1) CREA EL LAUNCHER USANDO EL CONTRATO DE FIREBASEUI
+    private EditText emailField, passwordField;
+    private Button loginButton;
+    private SignInButton googleButton;
+    private FirebaseAuth mAuth;
     private final ActivityResultLauncher<Intent> signInLauncher =
             registerForActivityResult(
                     new FirebaseAuthUIActivityResultContract(),
@@ -31,32 +40,43 @@ public class LoginActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.login_activity);
+        mAuth = FirebaseAuth.getInstance();
 
-        // Si ya hay un usuario autenticado, ir directamente al MainActivity
         FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
         if (currentUser != null) {
             goToMainActivity();
-        } else {
-            handleEmailLinkIntent(); // Por si abrimos la app desde un enlace de correo
-            launchEmailLinkSignIn(); // Lanzamos el flujo de login
+            return;
         }
+        emailField = findViewById(R.id.email);
+        passwordField = findViewById(R.id.password);
+        loginButton = findViewById(R.id.log_in);
+        googleButton = findViewById(R.id.btn_google);
+
+        loginButton.setOnClickListener(v -> {
+            String email = emailField.getText().toString().trim();
+            String password = passwordField.getText().toString().trim();
+
+            if (email.isEmpty() || password.isEmpty()) {
+                Toast.makeText(this, "Por favor, introduce el correo y la contraseña", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            mAuth.signInWithEmailAndPassword(email, password)
+                    .addOnCompleteListener(this, task -> {
+                        if (task.isSuccessful()) {
+                            goToMainActivity();
+                        } else {
+                            Toast.makeText(this, "Error de autenticación: " +
+                                    task.getException().getMessage(), Toast.LENGTH_SHORT).show();
+                        }
+                    });
+        });
+
+        googleButton.setOnClickListener(v -> launchGoogleSignIn());
     }
-    private void launchEmailLinkSignIn() {
-
-        ActionCodeSettings actionCodeSettings = ActionCodeSettings.newBuilder()
-                .setAndroidPackageName(
-                        "es.fdi.ucm.pad.notnotion",
-                        true,   // instalar si no está
-                        null)
-                .setHandleCodeInApp(true) // importante
-                .setUrl("https://padm-84832fcd.web.app/emailSignIn")
-                .build();
-
+    private void launchGoogleSignIn() {
         List<AuthUI.IdpConfig> providers = Arrays.asList(
-                new AuthUI.IdpConfig.EmailBuilder()
-                        .enableEmailLinkSignIn()
-                        .setActionCodeSettings(actionCodeSettings)
-                        .build()
+                new AuthUI.IdpConfig.GoogleBuilder().build()
         );
 
         Intent signInIntent = AuthUI.getInstance()
@@ -70,38 +90,17 @@ public class LoginActivity extends AppCompatActivity {
         signInLauncher.launch(signInIntent);
     }
 
-    private void handleEmailLinkIntent() {
-        if (AuthUI.canHandleIntent(getIntent())) {
-            if (getIntent().getExtras() != null) {
-                String link = getIntent().getExtras().getString("email_link_sign_in");
-                if (link != null) {
-                    List<AuthUI.IdpConfig> providers = Arrays.asList(
-                            new AuthUI.IdpConfig.EmailBuilder().build()
-                    );
-
-                    Intent signInIntent = AuthUI.getInstance()
-                            .createSignInIntentBuilder()
-                            .setAvailableProviders(providers)
-                            .build();
-
-                    signInLauncher.launch(signInIntent);
-                }
-            }
-        }
-    }
-
     private void onSignInResult(FirebaseAuthUIAuthenticationResult result) {
         int resultCode = result.getResultCode();
         IdpResponse response = result.getIdpResponse();
 
         if (resultCode == RESULT_OK) {
-            FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
             goToMainActivity();
         } else {
             if (response == null) {
-                System.out.println("Inicio de sesión cancelado por el usuario.");
+                Toast.makeText(this, "Inicio de sesión cancelado", Toast.LENGTH_SHORT).show();
             } else {
-                System.out.println("Error de autenticación: " + response.getError());
+                Toast.makeText(this, "Error: " + response.getError(), Toast.LENGTH_SHORT).show();
             }
         }
     }
