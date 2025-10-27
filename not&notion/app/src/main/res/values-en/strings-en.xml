@@ -20,4 +20,5 @@
     <string name="lng">Language</string>
     <string name="buscar">Search</string>
     <string name="route">Home -> PAD</string>
+    <string name="add_note">Add note</string>
 </resources>

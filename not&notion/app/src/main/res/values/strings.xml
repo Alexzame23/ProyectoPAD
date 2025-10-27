@@ -6,11 +6,19 @@
 
     <!--> Descriptions <-->
 
-    <string name="desc_return_button">Volver</string>
+    <string name="desc_return_button">Atras</string>
     <string name="desc_calendar_button">Calendario</string>
+    <string name="desc_notes_button">Notas</string>
     <string name="desc_add_button">Añadir elemento</string>
     <string name="new_user">Registrarse</string>
     <string name="contraseña">Contraseña</string>
     <string name="log_in">Iniciar Sesion</string>
     <string name="usuario">Usuario</string>
+
+    <!---->
+    <string name="or">o</string>
+    <string name="lng">Idioma</string>
+    <string name="buscar">Buscar</string>
+    <string name="route">Principal -> PAD</string>
+    <string name="add_note">Añadir nota</string>
 </resources>

@@ -16,7 +16,7 @@
         android:layout_marginEnd="16dp"
         android:layout_marginTop="16dp"
         app:boxBackgroundMode="filled"
-        app:boxBackgroundColor="@color/light_yellow_transparent"
+        app:boxBackgroundColor="@color/light_yellow"
         app:boxCornerRadiusTopStart="12dp"
         app:boxCornerRadiusTopEnd="12dp"
         app:boxCornerRadiusBottomStart="12dp"
@@ -52,6 +52,18 @@
         app:layout_constraintStart_toStartOf="@id/busquedaLayout"
         app:layout_constraintEnd_toEndOf="@id/busquedaLayout"
         android:layout_marginTop="8dp"/>
+    <ImageButton
+        android:id="@+id/btnAddNote"
+        android:layout_width="56dp"
+        android:layout_height="56dp"
+        android:src="@drawable/ic_add"
+        android:contentDescription="@string/add_note"
+        android:background="@drawable/bg_rounder"
+        android:scaleType="centerInside"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginBottom="16dp"
+        android:layout_marginEnd="16dp"/>
 
     <!-- RecyclerView para notas/carpetas -->
     <androidx.recyclerview.widget.RecyclerView

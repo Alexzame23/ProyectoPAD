@@ -18,6 +18,11 @@
         <item name="android:layout_height">wrap_content</item>
     </style>
 
+    <style name="ShapeAppearance.BottomNav" parent="ShapeAppearance.MaterialComponents.SmallComponent">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">16dp</item>
+    </style>
+
     <!-- Estilo para TextInputLayout si lo quieres global -->
     <style name="MyTextInputLayout" parent="Widget.MaterialComponents.TextInputLayout.FilledBox">
         <item name="boxBackgroundColor">@color/light_yellow_transparent</item>
