@@ -1,33 +1,30 @@
-<resources xmlns:tools="http://schemas.android.com/tools">
-    <!-- Base application theme. -->
-    <style name="Base.Theme.Notnotion" parent="Theme.Material3.DayNight.NoActionBar">
-        <!-- Colores globales -->
-        <item name="android:windowBackground">@color/bg</item>
-        <item name="android:textColor">@color/black</item>
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
 
-        <!-- Botón global -->
-        <item name="buttonStyle">@style/MyButton</item>
-        <!-- EditText global -->
-        <item name="editTextStyle">@style/MyEditText</item>
-    </style>
-
+    <!-- Estilo para los botones globales -->
     <style name="MyButton" parent="Widget.MaterialComponents.Button">
         <item name="backgroundTint">@color/light_brown</item>
         <item name="android:textColor">@color/text_button</item>
         <item name="cornerRadius">12dp</item>
     </style>
 
+    <!-- Estilo para los EditText globales -->
     <style name="MyEditText" parent="Widget.MaterialComponents.TextInputEditText.FilledBox">
-        <item name="android:background">@color/light_yellow</item>
+        <item name="android:backgroundTint">@color/light_yellow</item>
         <item name="android:textColor">@color/black</item>
-        <item name="android:padding">12dp</item>
+        <item name="android:textColorHint">@color/black</item>
+        <item name="android:paddingStart">16dp</item>
+        <item name="android:paddingEnd">16dp</item>
+        <item name="android:layout_height">wrap_content</item>
     </style>
 
-    <style name="ShapeAppearance.BottomNav" parent="">
-        <item name="cornerFamily">rounded</item>
-        <item name="cornerSize">16dp</item>
+    <!-- Estilo para TextInputLayout si lo quieres global -->
+    <style name="MyTextInputLayout" parent="Widget.MaterialComponents.TextInputLayout.FilledBox">
+        <item name="boxBackgroundColor">@color/light_yellow_transparent</item>
+        <item name="boxCornerRadiusTopStart">12dp</item>
+        <item name="boxCornerRadiusTopEnd">12dp</item>
+        <item name="boxCornerRadiusBottomStart">12dp</item>
+        <item name="boxCornerRadiusBottomEnd">12dp</item>
     </style>
 
-    <!-- Tema final -->
-    <style name="Theme.Notnotion" parent="Base.Theme.Notnotion" />
 </resources>
