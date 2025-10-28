@@ -1,6 +1,7 @@
 package es.fdi.ucm.pad.notnotion.ui.calendar;
 
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -21,23 +22,23 @@ public class CalendarFragment extends Fragment {
     public View onCreateView(@NonNull LayoutInflater inflater,
                              @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
-        // Inflamos el layout del fragmento
+        // Transformamos xml en vista
         return inflater.inflate(R.layout.calendar_main, container, false);
     }
 
     @Override
-    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) { //tiene que haber una view, pero la instancia depende de si ya se habia cargado antes
         super.onViewCreated(view, savedInstanceState);
 
         // Inicializamos CalendarView
         calendarView = view.findViewById(R.id.calendarView);
 
-        // Opcional: puedes mostrar la fecha seleccionada al cambiar
+        //Podemos cambiar de dia en funcion de donde toques
         calendarView.setOnDateChangeListener((view1, year, month, dayOfMonth) -> {
             // month empieza en 0
             int displayMonth = month + 1;
-            // Por ahora solo un log o Toast si quieres
-            // Log.d("CalendarFragment", "Fecha seleccionada: " + dayOfMonth + "/" + displayMonth + "/" + year);
+
+            Log.d("CalendarFragment", "Fecha seleccionada: " + dayOfMonth + "/" + displayMonth + "/" + year);
         });
     }
 }

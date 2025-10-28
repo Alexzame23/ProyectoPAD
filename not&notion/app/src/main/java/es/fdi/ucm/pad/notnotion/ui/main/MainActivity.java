@@ -43,7 +43,7 @@ public class MainActivity extends AppCompatActivity {
 
         BottomNavigationView bottomNavigation = findViewById(R.id.bottomNavigation);
 
-        //contenedor para las notas
+        //contenedor para cargar las pantallas principales
         FrameLayout contentContainer = findViewById(R.id.contentContainer);
         getLayoutInflater().inflate(R.layout.notes_main, contentContainer, true);
         // Ajuste para pantallas Edge-to-Edge
@@ -68,10 +68,11 @@ public class MainActivity extends AppCompatActivity {
         });
 
         bottomNavigation.setOnItemSelectedListener(item -> {
-            // Limpiar el contenedor antes de inflar otro layout
+            // Limpiar el contenedor antes de transformar
             int id = item.getItemId();
             contentContainer.removeAllViews();
 
+            //navegamos entre ambos botones
             if (id == R.id.nav_notes) {
                 getLayoutInflater().inflate(R.layout.notes_main, contentContainer, true);
             } else if (id == R.id.nav_calendar) {
