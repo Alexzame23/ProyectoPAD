@@ -6,7 +6,10 @@
 
         <!-- Botón global -->
         <item name="buttonStyle">@style/MyButton</item>
+        <item name="textInputStyle">@style/MyTextInputLayout</item>
+        <item name="editTextStyle">@style/MyEditText</item>
     </style>
+
 
     <style name="Theme.Notnotion" parent="Base.Theme.Notnotion" />
 </resources>

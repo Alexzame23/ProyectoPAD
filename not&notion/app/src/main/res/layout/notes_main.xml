@@ -17,15 +17,13 @@
         android:layout_marginEnd="16dp"
         android:layout_marginTop="16dp"
         app:boxBackgroundMode="filled"
+        app:boxStrokeColor="@color/transparent"
         app:boxBackgroundColor="@color/light_yellow"
-        app:boxCornerRadiusTopStart="12dp"
-        app:boxCornerRadiusTopEnd="12dp"
-        app:boxCornerRadiusBottomStart="12dp"
-        app:boxCornerRadiusBottomEnd="12dp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:hintEnabled="false">
+        app:hintEnabled="false"
+        >
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/busquedaBarra"

@@ -10,7 +10,7 @@
     <string name="desc_calendar_button">Calendario</string>
     <string name="desc_notes_button">Notas</string>
     <string name="desc_add_button">Añadir elemento</string>
-    <string name="new_user">Registrarse</string>
+    <string name="new_user"> o Registrarse</string>
     <string name="contraseña">Contraseña</string>
     <string name="log_in">Iniciar Sesion</string>
     <string name="or">o</string>
