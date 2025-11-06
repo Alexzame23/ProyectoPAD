@@ -5,20 +5,28 @@
     <string name="icono_folder">icono_folder</string>
 
     <!--> Descriptions <-->
-
+    <item name="profile_root" type="id">profile_root</item>
     <string name="desc_return_button">Atras</string>
     <string name="desc_calendar_button">Calendario</string>
     <string name="desc_notes_button">Notas</string>
     <string name="desc_add_button">Añadir elemento</string>
     <string name="new_user"> o Registrarse</string>
-    <string name="contraseña">Contraseña</string>
+    <string name="password">Contraseña</string>
+    <string name="confirm_password">Confirmar contraseña</string>
     <string name="log_in">Iniciar Sesion</string>
     <string name="or">o</string>
-    <string name="usuario">Usuario</string>
+    <string name="user">Usuario</string>
+    <string name="name">Nombre</string>
+    <string name="email">Correo</string>
+    <string name="create_account">Crear cuenta</string>
+    <string name="already_have_an_account">Ya tienes cuenta?</string>
+    <string name="select_language">Seleccionar lenguaje</string>
 
     <!---->
     <string name="lng">Idioma</string>
     <string name="buscar">Buscar</string>
     <string name="route">Principal -> PAD</string>
     <string name="add_note">Añadir nota</string>
+    <string name="profile_picture">foto_perfil</string>
+    <string name="editar_foto_perfil">editar_foto_perfil</string>
 </resources>
