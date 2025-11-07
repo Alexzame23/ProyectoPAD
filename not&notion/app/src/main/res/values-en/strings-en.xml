@@ -20,6 +20,7 @@
     <string name="create_account">Create account</string>
     <string name="already_have_an_account">Already have an account?</string>
     <string name="select_language">Select languaje</string>
+    <string name="profile_root" type="id">perfil_raiz</string>
 
     <!---->
     <string name="or">or</string>
@@ -27,4 +28,6 @@
     <string name="buscar">Search</string>
     <string name="route">Home -> PAD</string>
     <string name="add_note">Add note</string>
+    <string name="profile_picture">profile_picture</string>
+    <string name="editar_foto_perfil">edit_profile_picture</string>
 </resources>
