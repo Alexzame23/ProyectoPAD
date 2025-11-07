@@ -3,8 +3,10 @@ package es.fdi.ucm.pad.notnotion.ui.main;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.view.MenuItem;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
+import android.widget.PopupMenu;
 
 import com.google.firebase.auth.FirebaseUser;
 import com.squareup.picasso.Picasso;
@@ -13,12 +15,11 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
-import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.firebase.ui.auth.AuthUI;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.firebase.auth.FirebaseAuth;
+import com.firebase.ui.auth.AuthUI;
 
 import es.fdi.ucm.pad.notnotion.R;
 import es.fdi.ucm.pad.notnotion.ui.calendar.CalendarFragment;
@@ -39,66 +40,83 @@ public class MainActivity extends AppCompatActivity {
         //contenedor para cargar las pantallas principales
         FrameLayout contentContainer = findViewById(R.id.contentContainer);
         getLayoutInflater().inflate(R.layout.notes_main, contentContainer, true);
+
         // Ajuste para pantallas Edge-to-Edge
         ViewCompat.setOnApplyWindowInsetsListener(contentContainer, (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return WindowInsetsCompat.CONSUMED;
         });
-        /*
-        Esto para hacer que el recyclerView muestre los items de 3 en 3
-
-        recyclerView = findViewById(R.id.recyclerItems);
-        recyclerView.setLayoutManager(new GridLayoutManager(this, 3));
-        */
 
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
         ImageButton btnPerfil = findViewById(R.id.btnPerfil);
+
         if (user != null) {
-            // Mandar a profile_activity
+            // Si el usuario tiene foto, la mostramos en el botón
             if (user.getPhotoUrl() != null) {
                 Uri photoUri = user.getPhotoUrl();
-
-                // Cargar la foto en el botón
                 Picasso.get()
                         .load(photoUri)
-                        .placeholder(R.drawable.ic_user) // Imagen por defecto
-                        .error(R.drawable.ic_user)       // Si falla la carga
+                        .placeholder(R.drawable.ic_user)
+                        .error(R.drawable.ic_user)
                         .into(btnPerfil);
             }
-        }
-        else{
+
+            // 👇 NUEVA FUNCIÓN: menú del perfil
+            btnPerfil.setOnClickListener(v -> showProfileMenu(btnPerfil));
+
+        } else {
+            // Si no hay usuario logueado, mandamos a LoginActivity
             btnPerfil.setOnClickListener(v -> {
-                // Lanzar LoginActivity
                 Intent intent = new Intent(MainActivity.this, LoginActivity.class);
                 startActivity(intent);
+                finish();
             });
         }
 
-
         bottomNavigation.setOnItemSelectedListener(item -> {
-            // Limpiar el contenedor antes de transformar
             int id = item.getItemId();
             contentContainer.removeAllViews();
 
-            //navegamos entre ambos botones
             if (id == R.id.nav_notes) {
                 getLayoutInflater().inflate(R.layout.notes_main, contentContainer, true);
             } else if (id == R.id.nav_calendar) {
                 getLayoutInflater().inflate(R.layout.calendar_main, contentContainer, true);
-                // Cargar fragmento dentro del FrameLayout
                 getSupportFragmentManager()
                         .beginTransaction()
                         .replace(R.id.contentContainer, new CalendarFragment())
                         .commit();
             }
-
             return true;
         });
     }
+
+    private void showProfileMenu(ImageButton anchor) {
+        PopupMenu popup = new PopupMenu(this, anchor);
+        popup.getMenu().add("Cerrar sesión"); // Solo una opción por ahora
+
+        popup.setOnMenuItemClickListener(item -> {
+            if (item.getTitle().equals("Cerrar sesión")) {
+                logout();
+                return true;
+            }
+            return false;
+        });
+
+        popup.show();
+    }
+
+    private void logout() {
+        FirebaseAuth.getInstance().signOut();
+        AuthUI.getInstance().signOut(this); // Por si usó Google Sign-In
+        Intent intent = new Intent(MainActivity.this, LoginActivity.class);
+        startActivity(intent);
+        finish();
+    }
+
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        FirebaseAuth.getInstance().signOut();
+        // Ya no hacemos signOut automático
     }
 }
