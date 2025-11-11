@@ -71,7 +71,8 @@ public class MainActivity extends AppCompatActivity {
         // Firebase y botón de perfil
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
         ImageButton btnPerfil = findViewById(R.id.btnPerfil);
-
+        ImageButton btnNotes = findViewById(R.id.btnNotes);
+        ImageButton btnCalendar = findViewById(R.id.btnCalendar);
         if (user != null) {
             if (user.getPhotoUrl() != null) {
                 Uri photoUri = user.getPhotoUrl();
@@ -90,6 +91,22 @@ public class MainActivity extends AppCompatActivity {
                 Intent intent = new Intent(MainActivity.this, LoginActivity.class);
                 startActivity(intent);
                 finish();
+            });
+        }
+       if(btnNotes!=null){
+           btnNotes.setOnClickListener(v -> {
+               // Limpiamos el FrameLayout
+               contentContainer.removeAllViews();
+               // Inflamos la pantalla de Notes
+               getLayoutInflater().inflate(R.layout.notes_main, contentContainer, true);
+           });
+       }
+        if(btnCalendar!=null){
+            btnCalendar.setOnClickListener(v -> {
+                // Limpiamos el FrameLayout
+                contentContainer.removeAllViews();
+                // Inflamos la pantalla de Notes
+                getLayoutInflater().inflate(R.layout.calendar_main, contentContainer, true);
             });
         }
     }
