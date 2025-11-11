@@ -35,24 +35,44 @@ public class MainActivity extends AppCompatActivity {
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_main);
 
-        BottomNavigationView bottomNavigation = findViewById(R.id.bottomNavigation);
-
-        //contenedor para cargar las pantallas principales
+        // Contenedor para cargar las pantallas principales
         FrameLayout contentContainer = findViewById(R.id.contentContainer);
-        getLayoutInflater().inflate(R.layout.notes_main, contentContainer, true);
+        if (contentContainer != null) {
+            getLayoutInflater().inflate(R.layout.notes_main, contentContainer, true);
 
-        // Ajuste para pantallas Edge-to-Edge
-        ViewCompat.setOnApplyWindowInsetsListener(contentContainer, (v, insets) -> {
-            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
-            return WindowInsetsCompat.CONSUMED;
-        });
+            // Ajuste para pantallas Edge-to-Edge
+            ViewCompat.setOnApplyWindowInsetsListener(contentContainer, (v, insets) -> {
+                Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+                v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
+                return WindowInsetsCompat.CONSUMED;
+            });
+        }
 
+        // BottomNavigationView (solo si existe en el layout)
+        BottomNavigationView bottomNavigation = findViewById(R.id.bottomNavigation);
+        if (bottomNavigation != null && contentContainer != null) {
+            bottomNavigation.setOnItemSelectedListener(item -> {
+                int id = item.getItemId();
+                contentContainer.removeAllViews();
+
+                if (id == R.id.nav_notes) {
+                    getLayoutInflater().inflate(R.layout.notes_main, contentContainer, true);
+                } else if (id == R.id.nav_calendar) {
+                    getLayoutInflater().inflate(R.layout.calendar_main, contentContainer, true);
+                    getSupportFragmentManager()
+                            .beginTransaction()
+                            .replace(R.id.contentContainer, new CalendarFragment())
+                            .commit();
+                }
+                return true;
+            });
+        }
+
+        // Firebase y botón de perfil
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
         ImageButton btnPerfil = findViewById(R.id.btnPerfil);
 
         if (user != null) {
-            // Si el usuario tiene foto, la mostramos en el botón
             if (user.getPhotoUrl() != null) {
                 Uri photoUri = user.getPhotoUrl();
                 Picasso.get()
@@ -62,9 +82,8 @@ public class MainActivity extends AppCompatActivity {
                         .into(btnPerfil);
             }
 
-            // 👇 NUEVA FUNCIÓN: menú del perfil
+            // Menú del perfil
             btnPerfil.setOnClickListener(v -> showProfileMenu(btnPerfil));
-
         } else {
             // Si no hay usuario logueado, mandamos a LoginActivity
             btnPerfil.setOnClickListener(v -> {
@@ -73,23 +92,8 @@ public class MainActivity extends AppCompatActivity {
                 finish();
             });
         }
-
-        bottomNavigation.setOnItemSelectedListener(item -> {
-            int id = item.getItemId();
-            contentContainer.removeAllViews();
-
-            if (id == R.id.nav_notes) {
-                getLayoutInflater().inflate(R.layout.notes_main, contentContainer, true);
-            } else if (id == R.id.nav_calendar) {
-                getLayoutInflater().inflate(R.layout.calendar_main, contentContainer, true);
-                getSupportFragmentManager()
-                        .beginTransaction()
-                        .replace(R.id.contentContainer, new CalendarFragment())
-                        .commit();
-            }
-            return true;
-        });
     }
+
 
     private void showProfileMenu(ImageButton anchor) {
         PopupMenu popup = new PopupMenu(this, anchor);
