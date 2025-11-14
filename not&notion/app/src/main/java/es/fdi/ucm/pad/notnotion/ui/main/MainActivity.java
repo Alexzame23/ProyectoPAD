@@ -4,6 +4,8 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
+import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.TextView;
@@ -16,6 +18,7 @@ import android.widget.PopupMenu;
 
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.squareup.picasso.Picasso;
 import androidx.activity.EdgeToEdge;
@@ -36,7 +39,6 @@ import java.util.List;
 
 import es.fdi.ucm.pad.notnotion.R;
 import es.fdi.ucm.pad.notnotion.data.firebase.FirebaseFirestoreManager;
-import es.fdi.ucm.pad.notnotion.ui.calendar.CalendarFragment;
 import es.fdi.ucm.pad.notnotion.data.adapter.FoldersAdapter;
 import es.fdi.ucm.pad.notnotion.data.adapter.NotesAdapter;
 import es.fdi.ucm.pad.notnotion.data.firebase.FoldersManager;
@@ -48,7 +50,19 @@ import es.fdi.ucm.pad.notnotion.ui.user_logging.LoginActivity;
 
 public class MainActivity extends AppCompatActivity {
 
-    private RecyclerView recyclerView;
+    private FirebaseFirestoreManager firestoreManager;
+    private FoldersManager foldersManager;
+    private NotesManager notesManager;
+    private es.fdi.ucm.pad.notnotion.data.model.User currentUser;
+    private Folder currentFolder;
+    private FoldersAdapter foldersAdapter;
+    private NotesAdapter notesAdapter;
+    private RecyclerView recyclerFolders;
+    private RecyclerView recyclerNotes;
+    private TextView emptyMessage;
+    private final List<String> routePath = new ArrayList<>();
+    private final List<Folder> navigationStack = new ArrayList<>();
+    private TextView routeTextShow;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -57,6 +71,13 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         FrameLayout contentContainer = findViewById(R.id.contentContainer);
+
+        FirebaseFirestore.setLoggingEnabled(true);
+        Log.d("FirestoreDebug", "Firestore logging enabled");
+
+        firestoreManager = new FirebaseFirestoreManager();
+        foldersManager   = new FoldersManager();
+        notesManager = new NotesManager();
 
         if (contentContainer != null) {
             getLayoutInflater().inflate(R.layout.notes_main, contentContainer, true);
@@ -67,89 +88,281 @@ public class MainActivity extends AppCompatActivity {
                 return WindowInsetsCompat.CONSUMED;
             });
 
-            FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+            // --- Inicializar componentes ---
+            recyclerFolders = contentContainer.findViewById(R.id.recyclerFolders);
+            recyclerNotes = contentContainer.findViewById(R.id.recyclerNotes);
+            emptyMessage = contentContainer.findViewById(R.id.emptyMessage);
+
+            foldersAdapter = new FoldersAdapter();
+            notesAdapter   = new NotesAdapter();
+
+            recyclerFolders.setLayoutManager(new GridLayoutManager(this, 3));
+            recyclerNotes.setLayoutManager(new GridLayoutManager(this, 3));
+
+            recyclerFolders.setAdapter(foldersAdapter);
+            recyclerNotes.setAdapter(notesAdapter);
+
+            ImageButton btnGoBack = contentContainer.findViewById(R.id.btnGoBack);
+            if (btnGoBack != null) {
+                btnGoBack.setOnClickListener(v -> goBack());
+            }
+            ImageButton btnAddNote = contentContainer.findViewById(R.id.btnAddNote);
+
+            btnAddNote.setOnClickListener(v -> {
+                PopupMenu popup = new PopupMenu(MainActivity.this, btnAddNote);
+                popup.getMenu().add("Nueva carpeta");
+                popup.getMenu().add("Nueva nota");
+
+                popup.setOnMenuItemClickListener(itm -> {
+                    String title = itm.getTitle().toString();
+
+                    if (title.equals("Nueva carpeta")) {
+                        createNewFolderDialog();
+                        return true;
+                    }
+                    if (title.equals("Nueva nota")) {
+                        // TODO
+                        return true;
+                    }
+                    return false;
+                });
+
+                popup.show();
+            });
+            // --- Perfil ---
             ImageButton btnPerfil = findViewById(R.id.btnPerfil);
+            FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
 
             if (user != null) {
-                // Si el usuario tiene foto, la mostramos en el botón
+
+                // Cargar datos del usuario desde Firestore
+                firestoreManager.getCurrentUserData(userData -> {
+                    currentUser = userData;
+
+                    Log.d("MainActivity", "Usuario Firestore cargado:");
+                    Log.d("MainActivity", "Email: " + currentUser.getEmail());
+                    Log.d("MainActivity", "Username: " + currentUser.getUsername());
+                    Log.d("MainActivity", "Preferencias: " + currentUser.getPreferences());
+                });
+
+                // Foto en botón de perfil
                 if (user.getPhotoUrl() != null) {
-                    Uri photoUri = user.getPhotoUrl();
                     Picasso.get()
-                            .load(photoUri)
+                            .load(user.getPhotoUrl())
                             .placeholder(R.drawable.ic_user)
                             .error(R.drawable.ic_user)
                             .into(btnPerfil);
                 }
 
-                // NUEVA FUNCIÓN: menú del perfil
                 btnPerfil.setOnClickListener(v -> showProfileMenu(btnPerfil));
 
             } else {
-                // Si no hay usuario logueado, mandamos a LoginActivity
+                // Si NO hay usuario → ir a Login
                 btnPerfil.setOnClickListener(v -> {
                     Intent intent = new Intent(MainActivity.this, LoginActivity.class);
                     startActivity(intent);
                     finish();
                 });
             }
-
-            // Configurar RecyclerViews
-            RecyclerView recyclerFolders = contentContainer.findViewById(R.id.recyclerFolders);
-            RecyclerView recyclerNotes = contentContainer.findViewById(R.id.recyclerNotes);
-
-            // NUEVA FUNCIÓN: menú del perfil
-            btnPerfil.setOnClickListener(v -> showProfileMenu(btnPerfil));
-
-            recyclerFolders.setLayoutManager(new GridLayoutManager(this, 3));
-            recyclerNotes.setLayoutManager(new GridLayoutManager(this, 3));
-
-            /*
-            recyclerFolders.setAdapter(foldersAdapter);
-            recyclerNotes.setAdapter(notesAdapter);
-
-            // Cargar datos de Firebase (ejemplo, carpetas raíz y notas raíz)
-            new FoldersManager().getRootFolders(querySnapshot -> {
-                List<Folder> folders = new ArrayList<>();
-                for (QueryDocumentSnapshot doc : querySnapshot) {
-                    folders.add(doc.toObject(Folder.class));
-                }
-                foldersAdapter.setFolders(folders);
+            currentFolder = new Folder("root", "Root", "None", null, null, 0);
+            loadFolderContent(currentFolder);
+            foldersAdapter.setOnFolderClickListener(folder -> {
+                navigationStack.add(currentFolder);
+                loadFolderContent(folder);
             });
-
-            new NotesManager().getAllNotes(querySnapshot -> {
-                List<Note> notes = new ArrayList<>();
-                for (QueryDocumentSnapshot doc : querySnapshot) {
-                    notes.add(doc.toObject(Note.class));
-                }
-                notesAdapter.setNotes(notes);
-            });
-             */
         }
 
-        // BottomNavigation y resto de tu código tal como lo tenías
         BottomNavigationView bottomNavigation = findViewById(R.id.bottomNavigation);
-        if (bottomNavigation != null && contentContainer != null) {
+
+        if (bottomNavigation != null) {
             bottomNavigation.setOnItemSelectedListener(item -> {
+
                 int id = item.getItemId();
                 contentContainer.removeAllViews();
 
+                // -------- TAB NOTAS --------
                 if (id == R.id.nav_notes) {
+
+                    contentContainer.removeAllViews();
                     getLayoutInflater().inflate(R.layout.notes_main, contentContainer, true);
-                    // Aquí volverías a configurar los RecyclerViews como arriba si cambias de pestaña
-                } else if (id == R.id.nav_calendar) {
+
+                    recyclerFolders = contentContainer.findViewById(R.id.recyclerFolders);
+                    recyclerNotes   = contentContainer.findViewById(R.id.recyclerNotes);
+                    emptyMessage    = contentContainer.findViewById(R.id.emptyMessage);
+
+                    foldersAdapter = new FoldersAdapter();
+                    notesAdapter   = new NotesAdapter();
+
+                    recyclerFolders.setLayoutManager(new GridLayoutManager(this, 3));
+                    recyclerNotes.setLayoutManager(new GridLayoutManager(this, 3));
+
+                    recyclerFolders.setAdapter(foldersAdapter);
+                    recyclerNotes.setAdapter(notesAdapter);
+
+                    foldersManager = new FoldersManager();
+                    notesManager   = new NotesManager();
+
+                    if (currentFolder == null) {
+                        currentFolder = new Folder("root", "Root", "None", null, null, 0);
+                    }
+                    loadFolderContent(currentFolder);
+                    routePath.clear();
+                    updateRouteText();
+
+                    ImageButton btnGoBack = contentContainer.findViewById(R.id.btnGoBack);
+                    if (btnGoBack != null) {
+                        btnGoBack.setOnClickListener(v -> goBack());
+                    }
+
+                    foldersAdapter.setOnFolderClickListener(folder -> {
+                        navigationStack.add(currentFolder);
+                        loadFolderContent(folder);
+                    });
+
+                    ImageButton btnAddNote = contentContainer.findViewById(R.id.btnAddNote);
+
+                    btnAddNote.setOnClickListener(v -> {
+                        PopupMenu popup = new PopupMenu(MainActivity.this, btnAddNote);
+                        popup.getMenu().add("Nueva carpeta");
+                        popup.getMenu().add("Nueva nota");
+
+                        popup.setOnMenuItemClickListener(itm -> {
+                            String title = itm.getTitle().toString();
+
+                            if (title.equals("Nueva carpeta")) {
+                                createNewFolderDialog();
+                                return true;
+                            }
+                            if (title.equals("Nueva nota")) {
+                                // TODO: implementar
+                                return true;
+                            }
+                            return false;
+                        });
+
+                        popup.show();
+                    });
+                }
+
+                else if (id == R.id.nav_calendar) {
                     getLayoutInflater().inflate(R.layout.calendar_main, contentContainer, true);
+
                     getSupportFragmentManager()
                             .beginTransaction()
                             .replace(R.id.contentContainer, new CalendarFragment())
                             .commit();
                 }
+
                 return true;
             });
         }
 
-        // Botones de perfil, notas, calendario y barra de búsqueda igual que en tu código original
+    }
+    private void goBack() {
+        if (navigationStack.isEmpty()) return;
+
+        Folder prev = navigationStack.remove(navigationStack.size() - 1);
+
+        if (!routePath.isEmpty())
+            routePath.remove(routePath.size() - 1);
+
+        loadFolderContent(prev);
+    }
+    private void createNewFolderDialog() {
+        final EditText input = new EditText(this);
+        input.setHint("Nombre de la carpeta");
+
+        new androidx.appcompat.app.AlertDialog.Builder(this)
+                .setTitle("Crear nueva carpeta")
+                .setView(input)
+                .setPositiveButton("Crear", (dialog, which) -> {
+                    String folderName = input.getText().toString().trim();
+
+                    if (folderName.isEmpty()) {
+                        folderName = "Nueva carpeta";
+                    }
+
+                    createFolder(folderName);
+                })
+                .setNegativeButton("Cancelar", null)
+                .show();
+    }
+    private void createFolder(String folderName) {
+
+        if (currentFolder == null) return;
+
+        foldersManager.createFolder(
+                folderName,
+                currentFolder.getId(),
+                () -> {
+
+                    loadFolderContent(currentFolder);
+                }
+        );
     }
 
+    private void loadFolderContent(Folder folder) {
+
+        this.currentFolder = folder;
+
+        updateRouteText();
+
+        foldersManager.getSubfolders(folder.getId(), folderSnapshot -> {
+
+            List<Folder> subfolders = new ArrayList<>();
+            for (QueryDocumentSnapshot doc : folderSnapshot) {
+                subfolders.add(doc.toObject(Folder.class));
+            }
+
+            foldersAdapter.setFolders(subfolders);
+
+            loadNotesForFolder(folder, subfolders);
+        });
+    }
+
+    private void updateRouteText() {
+        routeTextShow = findViewById(R.id.routeTextShow);
+        if (routeTextShow == null) return;
+
+        if (currentFolder.getId().equals("root")) {
+            routePath.clear();
+            routeTextShow.setText("C:/root");
+            return;
+        }
+        if (routePath.isEmpty() ||
+                !routePath.get(routePath.size() - 1).equals(currentFolder.getName())) {
+            routePath.add(currentFolder.getName());
+        }
+
+        StringBuilder sb = new StringBuilder("C:/root");
+
+        for (String name : routePath) {
+            sb.append("/").append(name);
+        }
+
+        routeTextShow.setText(sb.toString());
+    }
+    private void loadNotesForFolder(Folder folder, List<Folder> subfolders) {
+
+        notesManager.getNotesByFolder(folder.getId(), noteSnapshot -> {
+
+            List<Note> notes = new ArrayList<>();
+            for (QueryDocumentSnapshot doc : noteSnapshot) {
+                notes.add(doc.toObject(Note.class));
+            }
+
+            notesAdapter.setNotes(notes);
+
+            // CONTROL FINAL: ¿hay algo?
+            boolean isEmpty = (subfolders.isEmpty() && notes.isEmpty());
+
+            if (isEmpty) {
+                emptyMessage.setVisibility(View.VISIBLE);
+            } else {
+                emptyMessage.setVisibility(View.GONE);
+            }
+        });
+    }
 
 
     private void showProfileMenu(ImageButton anchor) {

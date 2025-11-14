@@ -2,7 +2,9 @@ package es.fdi.ucm.pad.notnotion.data.model;
 
 import com.google.firebase.Timestamp;
 
-public class Note {
+import java.io.Serializable;
+
+public class Note implements Serializable{
     private String id;
     private String title;
     private String content;

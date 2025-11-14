@@ -14,7 +14,9 @@ import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
+import es.fdi.ucm.pad.notnotion.data.model.Folder;
 import es.fdi.ucm.pad.notnotion.data.model.User;
 
 public class FirebaseFirestoreManager {
@@ -72,6 +74,7 @@ public class FirebaseFirestoreManager {
         String uid = getUserId();
         if (uid == null) {
             Log.e(TAG, "No hay usuario autenticado");
+            listener.onSuccess(null); // ← evitar bloqueo
             return;
         }
 
@@ -83,9 +86,13 @@ public class FirebaseFirestoreManager {
                         listener.onSuccess(user);
                     } else {
                         Log.w(TAG, "El documento del usuario no existe");
+                        listener.onSuccess(null); // ← MUY IMPORTANTE
                     }
                 })
-                .addOnFailureListener(e -> Log.e(TAG, "Error al obtener datos del usuario", e));
+                .addOnFailureListener(e -> {
+                    Log.e(TAG, "Error al obtener usuario", e);
+                    listener.onSuccess(null); // ← evitar bloqueo
+                });
     }
 
     /**
@@ -109,4 +116,49 @@ public class FirebaseFirestoreManager {
                 .addOnFailureListener(e ->
                         Log.e(TAG, "Error al actualizar preferencias", e));
     }
+
+    public void initializeUserStructure(@NonNull FirebaseUser firebaseUser, @NonNull Runnable onComplete) {
+        String uid = firebaseUser.getUid();
+        DocumentReference userRef = db.collection("users").document(uid);
+
+        Map<String, Object> data = new HashMap<>();
+        data.put("email", firebaseUser.getEmail());
+        data.put("username", firebaseUser.getDisplayName() != null ? firebaseUser.getDisplayName() : "Sin nombre");
+        data.put("createdAt", Timestamp.now());
+        data.put("lastLogin", Timestamp.now());
+
+        Map<String, Object> preferences = new HashMap<>();
+        preferences.put("language", "es");
+        preferences.put("theme", "light");
+        data.put("preferences", preferences);
+
+        userRef.set(data).addOnSuccessListener(aVoid -> {
+
+            String folderId = "root";
+
+            Folder rootFolder = new Folder(
+                    folderId, "Root", "None",
+                    Timestamp.now(), Timestamp.now(), 0
+            );
+
+            userRef.collection("folders")
+                    .document(folderId)
+                    .set(rootFolder)
+                    .addOnSuccessListener(aVoid2 -> {
+
+                        NotesManager notesManager = new NotesManager();
+                        notesManager.addNote(
+                                "Nota de ejemplo",
+                                "prueba",
+                                folderId,
+                                false
+                        );
+
+                        Log.d(TAG, "✓ Usuario, carpeta root y nota inicial creados");
+                        onComplete.run();
+                    })
+                    .addOnFailureListener(e -> Log.e(TAG, "Error creando carpeta", e));
+        });
+    }
+
 }

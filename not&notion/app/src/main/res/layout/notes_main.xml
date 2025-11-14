@@ -15,15 +15,13 @@
         android:layout_height="wrap_content"
         android:layout_marginStart="16dp"
         android:layout_marginEnd="16dp"
-        android:layout_marginTop="0dp"
         app:boxBackgroundMode="filled"
         app:boxStrokeColor="@color/transparent"
         app:boxBackgroundColor="@color/light_yellow"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:hintEnabled="false"
-        >
+        app:hintEnabled="false">
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/busquedaBarra"
@@ -44,14 +42,29 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:text="@string/route"
-        android:contentDescription="@string/desc_return_button"
         android:padding="8dp"
         android:textColor="@color/text_button"
         android:gravity="center_vertical"
         app:layout_constraintTop_toBottomOf="@id/busquedaLayout"
         app:layout_constraintStart_toStartOf="@id/busquedaLayout"
         app:layout_constraintEnd_toEndOf="@id/busquedaLayout"
-        android:layout_marginTop="4dp"/> <!-- reducido de 8dp a 4dp -->
+        android:layout_marginTop="4dp"/>
+
+    <!-- BOTÓN VOLVER ATRÁS -->
+    <ImageButton
+        android:id="@+id/btnGoBack"
+        android:layout_width="56dp"
+        android:layout_height="56dp"
+        android:src="@drawable/ic_return"
+        android:background="@drawable/bg_rounder"
+        android:contentDescription="@string/desc_return_button"
+        android:scaleType="centerInside"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        android:layout_marginBottom="16dp"
+        android:layout_marginStart="16dp"/>
+
+    <!-- BOTÓN AÑADIR NOTA -->
     <ImageButton
         android:id="@+id/btnAddNote"
         android:layout_width="56dp"
@@ -85,8 +98,18 @@
                 android:id="@+id/recyclerFolders"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:clipToPadding="false"
-                android:scrollbars="vertical"/>
+                android:padding="16dp"/>
+
+            <TextView
+                android:id="@+id/emptyMessage"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Actualmente no hay contenido"
+                android:textSize="16sp"
+                android:textColor="@android:color/darker_gray"
+                android:visibility="gone"
+                android:layout_marginTop="16dp"
+                android:gravity="center"/>
 
             <!-- RecyclerView para notas -->
             <androidx.recyclerview.widget.RecyclerView

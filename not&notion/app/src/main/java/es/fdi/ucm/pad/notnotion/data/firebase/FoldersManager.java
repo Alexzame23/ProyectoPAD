@@ -11,11 +11,15 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 import es.fdi.ucm.pad.notnotion.data.model.Folder;
 
 public class FoldersManager {
+
+    private static final String TAG = "FoldersManager";
 
     private final FirebaseFirestore db;
     private final FirebaseAuth auth;
@@ -28,25 +32,25 @@ public class FoldersManager {
     private String getUserFoldersPath() {
         String uid = auth.getCurrentUser() != null ? auth.getCurrentUser().getUid() : null;
         if (uid == null) {
-            Log.e("Firestore", "No hay usuario autenticado");
+            Log.e(TAG, "No hay usuario autenticado");
             return null;
         }
         return "users/" + uid + "/folders";
     }
 
-    /**
-     * Inserta una nueva carpeta
-     */
-    public void addFolder(@NonNull String name, String parentFolderId, int type) {
+    public void createFolder(
+            @NonNull String name,
+            @NonNull String parentFolderId,
+            int type,
+            Runnable onSuccess
+    ) {
         String path = getUserFoldersPath();
         if (path == null) return;
-
         String folderId = UUID.randomUUID().toString();
-
         Folder folder = new Folder(
                 folderId,
                 name,
-                parentFolderId, // puede ser null
+                parentFolderId,
                 Timestamp.now(),
                 Timestamp.now(),
                 type
@@ -55,13 +59,23 @@ public class FoldersManager {
         db.collection(path)
                 .document(folderId)
                 .set(folder)
-                .addOnSuccessListener(aVoid -> Log.d("Firestore", "Carpeta creada correctamente"))
-                .addOnFailureListener(e -> Log.e("Firestore", "Error al crear carpeta", e));
+                .addOnSuccessListener(aVoid -> {
+                    Log.d(TAG, "Carpeta creada correctamente: " + name);
+                    if (onSuccess != null) onSuccess.run();
+                })
+                .addOnFailureListener(e ->
+                        Log.e(TAG, "Error al crear carpeta", e));
     }
-
-    /**
-     * Actualiza una carpeta existente
-     */
+    public void createFolder(
+            @NonNull String name,
+            @NonNull String parentFolderId,
+            @NonNull Runnable onSuccess
+    ) {
+        createFolder(name, parentFolderId, 0, onSuccess);
+    }
+    // -----------------------------------------------------------
+    // ✔ Actualizar carpeta (sin cambios)
+    // -----------------------------------------------------------
     public void updateFolder(@NonNull Folder folder) {
         String path = getUserFoldersPath();
         if (path == null) return;
@@ -71,13 +85,13 @@ public class FoldersManager {
         db.collection(path)
                 .document(folder.getId())
                 .set(folder)
-                .addOnSuccessListener(aVoid -> Log.d("Firestore", "Carpeta actualizada"))
-                .addOnFailureListener(e -> Log.e("Firestore", "Error al actualizar carpeta", e));
+                .addOnSuccessListener(aVoid -> Log.d(TAG, "Carpeta actualizada"))
+                .addOnFailureListener(e -> Log.e(TAG, "Error al actualizar carpeta", e));
     }
 
-    /**
-     * Elimina una carpeta
-     */
+    // -----------------------------------------------------------
+    // ✔ Eliminar carpeta
+    // -----------------------------------------------------------
     public void deleteFolder(String folderId) {
         String path = getUserFoldersPath();
         if (path == null) return;
@@ -85,13 +99,13 @@ public class FoldersManager {
         db.collection(path)
                 .document(folderId)
                 .delete()
-                .addOnSuccessListener(aVoid -> Log.d("Firestore", "Carpeta eliminada"))
-                .addOnFailureListener(e -> Log.e("Firestore", "Error al eliminar carpeta", e));
+                .addOnSuccessListener(aVoid -> Log.d(TAG, "Carpeta eliminada"))
+                .addOnFailureListener(e -> Log.e(TAG, "Error al eliminar carpeta", e));
     }
 
-    /**
-     * Obtiene todas las carpetas del usuario
-     */
+    // -----------------------------------------------------------
+    // ✔ Obtener TODAS las carpetas del usuario (sin cambios)
+    // -----------------------------------------------------------
     public void getAllFolders(OnSuccessListener<QuerySnapshot> listener) {
         String path = getUserFoldersPath();
         if (path == null) return;
@@ -99,34 +113,36 @@ public class FoldersManager {
         db.collection(path)
                 .get()
                 .addOnSuccessListener(listener)
-                .addOnFailureListener(e -> Log.e("Firestore", "Error al obtener carpetas", e));
+                .addOnFailureListener(e -> Log.e(TAG, "Error al obtener carpetas", e));
     }
 
-    /**
-     * Obtiene todas las subcarpetas de una carpeta específica
-     */
+    // -----------------------------------------------------------
+    // ✔ Obtener subcarpetas usando "None" como raíz
+    //   (MODIFICADO)
+    // -----------------------------------------------------------
     public void getSubfolders(String parentFolderId, OnSuccessListener<QuerySnapshot> listener) {
         String path = getUserFoldersPath();
         if (path == null) return;
 
         db.collection(path)
-                .whereEqualTo("parentFolderId", parentFolderId)
+                .whereEqualTo("parentFolderId",
+                        (parentFolderId == null || parentFolderId.equals("")) ? "None" : parentFolderId)
                 .get()
                 .addOnSuccessListener(listener)
-                .addOnFailureListener(e -> Log.e("Firestore", "Error al obtener subcarpetas", e));
+                .addOnFailureListener(e -> Log.e(TAG, "Error al obtener subcarpetas", e));
     }
 
-    /**
-     * Obtiene todas las carpetas raíz (sin padre)
-     */
+    // -----------------------------------------------------------
+    // ✔ Obtener carpetas raíz → ahora compatibles con "None"
+    // -----------------------------------------------------------
     public void getRootFolders(OnSuccessListener<QuerySnapshot> listener) {
         String path = getUserFoldersPath();
         if (path == null) return;
 
         db.collection(path)
-                .whereEqualTo("parentFolderId", null)
+                .whereEqualTo("parentFolderId", "None")
                 .get()
                 .addOnSuccessListener(listener)
-                .addOnFailureListener(e -> Log.e("Firestore", "Error al obtener carpetas raíz", e));
+                .addOnFailureListener(e -> Log.e(TAG, "Error al obtener carpetas raíz", e));
     }
 }

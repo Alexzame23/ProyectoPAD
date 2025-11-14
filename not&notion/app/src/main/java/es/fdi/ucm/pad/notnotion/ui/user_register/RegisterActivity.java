@@ -15,8 +15,10 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException;
 import com.google.firebase.auth.FirebaseAuthUserCollisionException;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.auth.UserProfileChangeRequest;
 
 import es.fdi.ucm.pad.notnotion.R;
+import es.fdi.ucm.pad.notnotion.data.firebase.FirebaseFirestoreManager;
 import es.fdi.ucm.pad.notnotion.ui.main.MainActivity;
 import es.fdi.ucm.pad.notnotion.ui.user_logging.LoginActivity;
 
@@ -33,7 +35,7 @@ public class RegisterActivity extends AppCompatActivity {
 
         mAuth = FirebaseAuth.getInstance();
 
-        // Referencias UI
+        // UI
         nameInput = findViewById(R.id.name_input);
         emailInput = findViewById(R.id.email_input);
         passwordInput = findViewById(R.id.password_input);
@@ -65,33 +67,37 @@ public class RegisterActivity extends AppCompatActivity {
             return;
         }
 
-        // Intentamos crear el usuario con FirebaseAuth
         mAuth.createUserWithEmailAndPassword(email, password)
                 .addOnCompleteListener(this, task -> {
                     if (task.isSuccessful()) {
-                        // Registro correcto
+
                         FirebaseUser user = mAuth.getCurrentUser();
+                        FirebaseFirestoreManager firestore = new FirebaseFirestoreManager();
 
-                        // (Opcional) guardar el nombre en el perfil
-                        if (user != null) {
-                            user.updateProfile(new com.google.firebase.auth.UserProfileChangeRequest.Builder()
-                                    .setDisplayName(name)
-                                    .build());
-                        }
+                        // 🔥 ESPERAR a que Firestore termine antes de pasar a Main
+                        firestore.initializeUserStructure(user, () -> {
 
-                        Toast.makeText(this, "Cuenta creada correctamente", Toast.LENGTH_SHORT).show();
-                        goToMainActivity();
+                            // Actualizar nombre visual del perfil de FirebaseAuth
+                            if (user != null) {
+                                user.updateProfile(new UserProfileChangeRequest.Builder()
+                                        .setDisplayName(name)
+                                        .build());
+                            }
+
+                            Toast.makeText(this, "Cuenta creada correctamente", Toast.LENGTH_SHORT).show();
+                            goToMainActivity();
+                        });
+
                     } else {
                         Exception e = task.getException();
                         if (e instanceof FirebaseAuthUserCollisionException) {
                             Toast.makeText(this, "Ya existe una cuenta con ese correo", Toast.LENGTH_LONG).show();
                         } else if (e instanceof FirebaseAuthInvalidCredentialsException) {
-                            Toast.makeText(this, "Correo o contraseña no válidos (mínimo 6 caracteres)", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(this, "Error: contraseña mínima de 6 caracteres", Toast.LENGTH_SHORT).show();
                         } else {
                             Toast.makeText(this, "Error al crear la cuenta: " + e.getMessage(), Toast.LENGTH_LONG).show();
                         }
                     }
-
                 });
     }
 

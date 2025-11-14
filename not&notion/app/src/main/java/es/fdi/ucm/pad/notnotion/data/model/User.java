@@ -1,17 +1,21 @@
 package es.fdi.ucm.pad.notnotion.data.model;
 
 import com.google.firebase.Timestamp;
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 
-public class User {
+public class User implements Serializable {
+
+    private static final long serialVersionUID = 1L;
+
     private String email;
     private String username;
     private Timestamp createdAt;
     private Timestamp lastLogin;
     private Map<String, Object> preferences;
 
-    // 🔹 Constructor vacío necesario para Firebase
+    // Constructor vacío necesario para Firebase
     public User() {}
 
     public User(String email, String username, Timestamp createdAt, Timestamp lastLogin, String language, String theme) {
@@ -25,7 +29,7 @@ public class User {
         this.preferences.put("theme", theme);
     }
 
-    // 🔹 Getters y Setters
+    // Getters y Setters
     public String getEmail() { return email; }
     public void setEmail(String email) { this.email = email; }
 

@@ -8,35 +8,38 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
-import es.fdi.ucm.pad.notnotion.data.model.Folder;
-import es.fdi.ucm.pad.notnotion.data.model.Note;
-
 import java.util.ArrayList;
 import java.util.List;
 
 import es.fdi.ucm.pad.notnotion.R;
+import es.fdi.ucm.pad.notnotion.data.model.Note;
 
 public class NotesAdapter extends RecyclerView.Adapter<NotesAdapter.NoteViewHolder> {
 
     private List<Note> notes = new ArrayList<>();
+
     public interface OnNoteClickListener {
         void onNoteClick(Note note);
     }
+
     private OnNoteClickListener listener;
-    public void setOnNoteClickListener(NotesAdapter.OnNoteClickListener listener) {
+
+    public void setOnNoteClickListener(OnNoteClickListener listener) {
         this.listener = listener;
     }
+
     @NonNull
     @Override
-    public NotesAdapter.NoteViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_note, parent, false);
-        return new NotesAdapter.NoteViewHolder(view);
+    public NoteViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        View view = LayoutInflater.from(parent.getContext())
+                .inflate(R.layout.item_note, parent, false);
+        return new NoteViewHolder(view);
     }
 
     @Override
-    public void onBindViewHolder(@NonNull NotesAdapter.NoteViewHolder holder, int position) {
+    public void onBindViewHolder(@NonNull NoteViewHolder holder, int position) {
         Note note = notes.get(position);
-        holder.contentView.setText(note.getContent());
+
         holder.titleView.setText(note.getTitle());
 
         holder.itemView.setOnClickListener(v -> {
@@ -51,20 +54,19 @@ public class NotesAdapter extends RecyclerView.Adapter<NotesAdapter.NoteViewHold
         return notes.size();
     }
 
-    public void setNotes(List<Note> newNotes){
+    public void setNotes(List<Note> newNotes) {
         notes.clear();
-        if(newNotes!= null)
+        if (newNotes != null)
             notes.addAll(newNotes);
         notifyDataSetChanged();
     }
+
     static class NoteViewHolder extends RecyclerView.ViewHolder {
-        TextView titleView, contentView;
+        TextView titleView;
 
         public NoteViewHolder(@NonNull View itemView) {
             super(itemView);
-            titleView = itemView.findViewById(R.id.itemTitle);
-            contentView = itemView.findViewById(R.id.itemDescription);
+            titleView = itemView.findViewById(R.id.noteTitle);  // <- correcto
         }
-
     }
 }
