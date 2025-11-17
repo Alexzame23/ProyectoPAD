@@ -59,6 +59,13 @@ public class CalendarFragment extends Fragment {
         eventAdapter = new EventAdapter();
         recyclerEvents.setAdapter(eventAdapter);
 
+        eventAdapter.setOnEventClickListener(event -> {
+            Intent intent = new Intent(getContext(), EventEditActivity.class);
+            intent.putExtra("eventId", event.getId());
+            startActivity(intent);
+        });
+
+
         // --- FIRESTORE MANAGER ---
         eventsManager = new CalendarEventsManager();
 
@@ -118,6 +125,7 @@ public class CalendarFragment extends Fragment {
 
             for (QueryDocumentSnapshot doc : query) {
                 CalendarEvent ev = doc.toObject(CalendarEvent.class);
+                ev.setId(doc.getId());
 
                 long time = ev.getStartDate().toDate().getTime();
 

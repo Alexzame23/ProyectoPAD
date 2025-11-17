@@ -51,32 +51,31 @@
         android:layout_marginTop="4dp"/>
 
     <!-- BOTÓN VOLVER ATRÁS -->
-    <ImageButton
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/btnGoBack"
-        android:layout_width="56dp"
-        android:layout_height="56dp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
         android:src="@drawable/ic_return"
-        android:background="@drawable/bg_rounder"
         android:contentDescription="@string/desc_return_button"
-        android:scaleType="centerInside"
-        app:layout_constraintBottom_toBottomOf="parent"
+        app:tint="@android:color/white"
+        app:backgroundTint="@color/brown"
         app:layout_constraintStart_toStartOf="parent"
-        android:layout_marginBottom="16dp"
-        android:layout_marginStart="16dp"/>
+        app:layout_constraintBottom_toBottomOf="parent"
+        android:layout_margin="16dp"/>
+
 
     <!-- BOTÓN AÑADIR NOTA -->
-    <ImageButton
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/btnAddNote"
-        android:layout_width="56dp"
-        android:layout_height="56dp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
         android:src="@drawable/ic_add"
         android:contentDescription="@string/add_note"
-        android:background="@drawable/bg_rounder"
-        android:scaleType="centerInside"
-        app:layout_constraintBottom_toBottomOf="parent"
+        app:tint="@android:color/white"
+        app:backgroundTint="@color/brown"
         app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginBottom="16dp"
-        android:layout_marginEnd="16dp"/>
+        app:layout_constraintBottom_toBottomOf="parent"
+        android:layout_margin="16dp"/>
 
     <androidx.core.widget.NestedScrollView
         android:id="@+id/scrollItems"

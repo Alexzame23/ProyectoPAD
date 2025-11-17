@@ -22,19 +22,21 @@
             android:hint="Descripción"
             android:layout_marginTop="16dp"/>
 
-        <!-- FECHA -->
-        <DatePicker
-            android:id="@+id/datePicker"
+        <!-- BOTÓN SELECCIONAR FECHA -->
+        <Button
+            android:id="@+id/btnPickDate"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:text="Seleccionar fecha"
             android:layout_marginTop="16dp" />
 
-        <!-- HORA -->
-        <TimePicker
-            android:id="@+id/timePicker"
+        <!-- BOTÓN SELECCIONAR HORA -->
+        <Button
+            android:id="@+id/btnPickTime"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp" />
+            android:text="Seleccionar hora"
+            android:layout_marginTop="12dp" />
 
         <Button
             android:id="@+id/btnSaveEvent"
@@ -44,6 +46,17 @@
             android:layout_marginTop="24dp"
             android:backgroundTint="@color/brown"
             android:textColor="@android:color/white"/>
+
+        <Button
+            android:id="@+id/btnDeleteEvent"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Eliminar evento"
+            android:backgroundTint="#B00020"
+            android:textColor="@android:color/white"
+            android:layout_marginTop="12dp"
+            android:layout_marginStart="0dp"
+            android:layout_marginEnd="0dp"/>
 
     </LinearLayout>
 </ScrollView>

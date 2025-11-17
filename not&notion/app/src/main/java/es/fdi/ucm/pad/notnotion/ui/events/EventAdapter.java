@@ -20,6 +20,12 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.EventViewHol
     private List<CalendarEvent> events = new ArrayList<>();
     private final SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm");
 
+    private OnEventClickListener listener;
+
+    public void setOnEventClickListener(OnEventClickListener listener) {
+        this.listener = listener;
+    }
+
     @NonNull
     @Override
     public EventViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
@@ -36,7 +42,14 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.EventViewHol
         holder.eventHour.setText(timeFormat.format(event.getStartDate().toDate()));
 
         // El punto y la línea ya son estáticos en el XML
+
+        holder.itemView.setOnClickListener(v -> {
+            if (listener != null) {
+                listener.onEventClick(event);
+            }
+        });
     }
+
 
     @Override
     public int getItemCount() {
