@@ -5,6 +5,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.widget.CalendarView;
 import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
@@ -35,14 +36,18 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.firebase.ui.auth.AuthUI;
 
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
 
 import es.fdi.ucm.pad.notnotion.R;
+import es.fdi.ucm.pad.notnotion.data.adapter.EventAdapter;
+import es.fdi.ucm.pad.notnotion.data.firebase.CalendarEventsManager;
 import es.fdi.ucm.pad.notnotion.data.firebase.FirebaseFirestoreManager;
 import es.fdi.ucm.pad.notnotion.data.adapter.FoldersAdapter;
 import es.fdi.ucm.pad.notnotion.data.adapter.NotesAdapter;
 import es.fdi.ucm.pad.notnotion.data.firebase.FoldersManager;
 import es.fdi.ucm.pad.notnotion.data.firebase.NotesManager;
+import es.fdi.ucm.pad.notnotion.data.model.CalendarEvent;
 import es.fdi.ucm.pad.notnotion.data.model.Folder;
 import es.fdi.ucm.pad.notnotion.data.model.Note;
 import es.fdi.ucm.pad.notnotion.ui.Fragments.CalendarFragment;
@@ -53,17 +58,24 @@ public class MainActivity extends AppCompatActivity {
     private FirebaseFirestoreManager firestoreManager;
     private FoldersManager foldersManager;
     private NotesManager notesManager;
+
+    private CalendarEventsManager eventManager;
     private es.fdi.ucm.pad.notnotion.data.model.User currentUser;
     private Folder currentFolder;
+
+    private EventAdapter eventsAdapter;
     private FoldersAdapter foldersAdapter;
     private NotesAdapter notesAdapter;
     private RecyclerView recyclerFolders;
     private RecyclerView recyclerNotes;
+
+    private RecyclerView recyclerEvents;
     private TextView emptyMessage;
     private final List<String> routePath = new ArrayList<>();
     private final List<Folder> navigationStack = new ArrayList<>();
     private TextView routeTextShow;
 
+    private CalendarView calendarView;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -78,6 +90,7 @@ public class MainActivity extends AppCompatActivity {
         firestoreManager = new FirebaseFirestoreManager();
         foldersManager   = new FoldersManager();
         notesManager = new NotesManager();
+        eventManager = new CalendarEventsManager();
 
         if (contentContainer != null) {
             getLayoutInflater().inflate(R.layout.notes_main, contentContainer, true);
@@ -91,8 +104,9 @@ public class MainActivity extends AppCompatActivity {
             // --- Inicializar componentes ---
             recyclerFolders = contentContainer.findViewById(R.id.recyclerFolders);
             recyclerNotes = contentContainer.findViewById(R.id.recyclerNotes);
-            emptyMessage = contentContainer.findViewById(R.id.emptyMessage);
+            recyclerEvents = contentContainer.findViewById(R.id.recyclerEvents);
 
+            eventsAdapter = new EventAdapter();
             foldersAdapter = new FoldersAdapter();
             notesAdapter   = new NotesAdapter();
 
@@ -188,7 +202,7 @@ public class MainActivity extends AppCompatActivity {
 
                     recyclerFolders = contentContainer.findViewById(R.id.recyclerFolders);
                     recyclerNotes   = contentContainer.findViewById(R.id.recyclerNotes);
-                    emptyMessage    = contentContainer.findViewById(R.id.emptyMessage);
+                    recyclerEvents = contentContainer.findViewById(R.id.recyclerEvents);
 
                     foldersAdapter = new FoldersAdapter();
                     notesAdapter   = new NotesAdapter();
@@ -245,12 +259,25 @@ public class MainActivity extends AppCompatActivity {
                 }
 
                 else if (id == R.id.nav_calendar) {
+
+                    contentContainer.removeAllViews();
                     getLayoutInflater().inflate(R.layout.calendar_main, contentContainer, true);
 
-                    getSupportFragmentManager()
-                            .beginTransaction()
-                            .replace(R.id.contentContainer, new CalendarFragment())
-                            .commit();
+                    calendarView = contentContainer.findViewById(R.id.calendarView);
+                    recyclerEvents = contentContainer.findViewById(R.id.recyclerEvents);
+
+                    eventsAdapter = new EventAdapter();
+                    recyclerEvents.setLayoutManager(new LinearLayoutManager(this));
+                    recyclerEvents.setAdapter(eventsAdapter);
+
+                    // Cargar eventos del día actual
+                    Calendar today = Calendar.getInstance();
+                    loadEventsForDay(today.get(Calendar.YEAR), today.get(Calendar.MONTH), today.get(Calendar.DAY_OF_MONTH));
+
+                    // Escuchar cambios de fecha
+                    calendarView.setOnDateChangeListener((view, year, month, dayOfMonth) -> {
+                        loadEventsForDay(year, month, dayOfMonth);
+                    });
                 }
 
                 return true;
@@ -258,6 +285,31 @@ public class MainActivity extends AppCompatActivity {
         }
 
     }
+
+    private void loadEventsForDay(int year, int month, int day) {
+        if (currentUser == null) return;
+
+        eventManager.getAllEvents(querySnapshot -> {
+            List<CalendarEvent> eventsForDay = new ArrayList<>();
+
+            for (QueryDocumentSnapshot doc : querySnapshot) {
+                CalendarEvent event = doc.toObject(CalendarEvent.class);
+
+                Calendar eventCal = Calendar.getInstance();
+                eventCal.setTime(event.getStartDate().toDate());
+
+                if (eventCal.get(Calendar.YEAR) == year &&
+                        eventCal.get(Calendar.MONTH) == month &&
+                        eventCal.get(Calendar.DAY_OF_MONTH) == day) {
+                    eventsForDay.add(event);
+                }
+            }
+
+            eventsAdapter.setEvents(eventsForDay);
+        });
+
+    }
+
     private void goBack() {
         if (navigationStack.isEmpty()) return;
 
@@ -353,14 +405,7 @@ public class MainActivity extends AppCompatActivity {
 
             notesAdapter.setNotes(notes);
 
-            // CONTROL FINAL: ¿hay algo?
-            boolean isEmpty = (subfolders.isEmpty() && notes.isEmpty());
 
-            if (isEmpty) {
-                emptyMessage.setVisibility(View.VISIBLE);
-            } else {
-                emptyMessage.setVisibility(View.GONE);
-            }
         });
     }
 

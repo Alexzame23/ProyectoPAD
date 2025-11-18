@@ -31,7 +31,7 @@ public class CalendarEventsManager {
             Log.e("Firestore", "No hay usuario autenticado");
             return null;
         }
-        return "users/" + uid + "/calendar_events";
+        return "users/" + uid + "/events";
     }
 
     /**
