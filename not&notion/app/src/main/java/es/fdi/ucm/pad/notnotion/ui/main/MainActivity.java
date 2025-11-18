@@ -16,8 +16,10 @@ import android.text.TextWatcher;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.PopupMenu;
+import android.widget.Toast;
 
 import com.google.android.material.textfield.TextInputEditText;
+import com.google.firebase.Timestamp;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
@@ -51,6 +53,7 @@ import es.fdi.ucm.pad.notnotion.data.model.CalendarEvent;
 import es.fdi.ucm.pad.notnotion.data.model.Folder;
 import es.fdi.ucm.pad.notnotion.data.model.Note;
 import es.fdi.ucm.pad.notnotion.ui.Fragments.CalendarFragment;
+import es.fdi.ucm.pad.notnotion.ui.Fragments.EditNoteActivity;
 import es.fdi.ucm.pad.notnotion.ui.user_logging.LoginActivity;
 
 public class MainActivity extends AppCompatActivity {
@@ -109,6 +112,12 @@ public class MainActivity extends AppCompatActivity {
             eventsAdapter = new EventAdapter();
             foldersAdapter = new FoldersAdapter();
             notesAdapter   = new NotesAdapter();
+            notesAdapter = new NotesAdapter();
+            recyclerNotes.setAdapter(notesAdapter);
+
+            notesAdapter.setOnNoteClickListener(note -> {
+                mostrarPantallaEdicion(note);
+            });
 
             recyclerFolders.setLayoutManager(new GridLayoutManager(this, 3));
             recyclerNotes.setLayoutManager(new GridLayoutManager(this, 3));
@@ -195,69 +204,9 @@ public class MainActivity extends AppCompatActivity {
                 contentContainer.removeAllViews();
 
                 // -------- TAB NOTAS --------
-                if (id == R.id.nav_notes) {
-
-                    contentContainer.removeAllViews();
-                    getLayoutInflater().inflate(R.layout.notes_main, contentContainer, true);
-
-                    recyclerFolders = contentContainer.findViewById(R.id.recyclerFolders);
-                    recyclerNotes   = contentContainer.findViewById(R.id.recyclerNotes);
-                    recyclerEvents = contentContainer.findViewById(R.id.recyclerEvents);
-
-                    foldersAdapter = new FoldersAdapter();
-                    notesAdapter   = new NotesAdapter();
-
-                    recyclerFolders.setLayoutManager(new GridLayoutManager(this, 3));
-                    recyclerNotes.setLayoutManager(new GridLayoutManager(this, 3));
-
-                    recyclerFolders.setAdapter(foldersAdapter);
-                    recyclerNotes.setAdapter(notesAdapter);
-
-                    foldersManager = new FoldersManager();
-                    notesManager   = new NotesManager();
-
-                    if (currentFolder == null) {
-                        currentFolder = new Folder("root", "Root", "None", null, null, 0);
-                    }
-                    loadFolderContent(currentFolder);
-                    routePath.clear();
-                    updateRouteText();
-
-                    ImageButton btnGoBack = contentContainer.findViewById(R.id.btnGoBack);
-                    if (btnGoBack != null) {
-                        btnGoBack.setOnClickListener(v -> goBack());
-                    }
-
-                    foldersAdapter.setOnFolderClickListener(folder -> {
-                        navigationStack.add(currentFolder);
-                        loadFolderContent(folder);
-                    });
-
-                    ImageButton btnAddNote = contentContainer.findViewById(R.id.btnAddNote);
-
-                    btnAddNote.setOnClickListener(v -> {
-                        PopupMenu popup = new PopupMenu(MainActivity.this, btnAddNote);
-                        popup.getMenu().add("Nueva carpeta");
-                        popup.getMenu().add("Nueva nota");
-
-                        popup.setOnMenuItemClickListener(itm -> {
-                            String title = itm.getTitle().toString();
-
-                            if (title.equals("Nueva carpeta")) {
-                                createNewFolderDialog();
-                                return true;
-                            }
-                            if (title.equals("Nueva nota")) {
-                                // TODO: implementar
-                                return true;
-                            }
-                            return false;
-                        });
-
-                        popup.show();
-                    });
+                if(id==R.id.nav_notes){
+                    volverAlExplorador();
                 }
-
                 else if (id == R.id.nav_calendar) {
 
                     contentContainer.removeAllViews();
@@ -285,6 +234,107 @@ public class MainActivity extends AppCompatActivity {
         }
 
     }
+    private void mostrarPantallaEdicion(Note note) {
+        FrameLayout contentContainer = findViewById(R.id.contentContainer);
+        contentContainer.removeAllViews();
+        getLayoutInflater().inflate(R.layout.edit_note, contentContainer, true);
+
+        EditText etTitle = contentContainer.findViewById(R.id.etTitle);
+        EditText etContent = contentContainer.findViewById(R.id.etContent);
+        ImageButton btnSave = contentContainer.findViewById(R.id.btnSave);
+
+        etTitle.setText(note.getTitle());
+        etContent.setText(note.getContent());
+
+        btnSave.setOnClickListener(v -> {
+            note.setTitle(etTitle.getText().toString());
+            note.setContent(etContent.getText().toString());
+            note.setUpdatedAt(com.google.firebase.Timestamp.now());
+
+            FirebaseFirestore db = FirebaseFirestore.getInstance();
+            FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+            if (user == null) return;
+
+            String userId = user.getUid();
+            String folderId = currentFolder.getId();
+            String noteId = note.getId();
+
+            FirebaseFirestore.getInstance()
+                    .collection("users")
+                    .document(userId)
+                    .collection("folders")
+                    .document(folderId)
+                    .collection("notes")
+                    .document(noteId)
+                    .update(
+                            "title", note.getTitle(),
+                            "content", note.getContent(),
+                            "updatedAt", note.getUpdatedAt()
+                    )
+                    .addOnSuccessListener(aVoid -> {
+                        Toast.makeText(this, "Nota actualizada", Toast.LENGTH_SHORT).show();
+                        volverAlExplorador();
+                    })
+                    .addOnFailureListener(e -> {
+                        Log.e("UPDATE_NOTE_ERROR", "Error al actualizar nota", e);
+                        Toast.makeText(this,
+                                "Error al actualizar: " + e.getMessage(),
+                                Toast.LENGTH_LONG
+                        ).show();
+                    });
+        });
+    }
+    private void volverAlExplorador() {
+        FrameLayout contentContainer = findViewById(R.id.contentContainer);
+
+        contentContainer.removeAllViews();
+        getLayoutInflater().inflate(R.layout.notes_main, contentContainer, true);
+
+        recyclerFolders = contentContainer.findViewById(R.id.recyclerFolders);
+        recyclerNotes   = contentContainer.findViewById(R.id.recyclerNotes);
+
+        foldersAdapter = new FoldersAdapter();
+        notesAdapter   = new NotesAdapter();
+
+        recyclerFolders.setLayoutManager(new GridLayoutManager(this, 3));
+        recyclerNotes.setLayoutManager(new GridLayoutManager(this, 3));
+
+        recyclerFolders.setAdapter(foldersAdapter);
+        recyclerNotes.setAdapter(notesAdapter);
+
+        // Listener para abrir edición
+        notesAdapter.setOnNoteClickListener(note -> mostrarPantallaEdicion(note));
+
+        // Cargar contenido
+        loadFolderContent(currentFolder);
+
+        // Botón atrás
+        ImageButton btnGoBack = contentContainer.findViewById(R.id.btnGoBack);
+        if (btnGoBack != null) btnGoBack.setOnClickListener(v -> goBack());
+
+        // Botón añadir
+        ImageButton btnAddNote = contentContainer.findViewById(R.id.btnAddNote);
+        if (btnAddNote != null) {
+            btnAddNote.setOnClickListener(v -> {
+                PopupMenu popup = new PopupMenu(MainActivity.this, btnAddNote);
+                popup.getMenu().add("Nueva carpeta");
+                popup.getMenu().add("Nueva nota");
+                popup.setOnMenuItemClickListener(itm -> {
+                    if (itm.getTitle().equals("Nueva carpeta")) {
+                        createNewFolderDialog();
+                        return true;
+                    }
+                    if (itm.getTitle().equals("Nueva nota")) {
+                        // crear nota nueva
+                        return true;
+                    }
+                    return false;
+                });
+                popup.show();
+            });
+        }
+    }
+
 
     private void loadEventsForDay(int year, int month, int day) {
         if (currentUser == null) return;
@@ -395,17 +445,14 @@ public class MainActivity extends AppCompatActivity {
         routeTextShow.setText(sb.toString());
     }
     private void loadNotesForFolder(Folder folder, List<Folder> subfolders) {
-
         notesManager.getNotesByFolder(folder.getId(), noteSnapshot -> {
-
             List<Note> notes = new ArrayList<>();
             for (QueryDocumentSnapshot doc : noteSnapshot) {
-                notes.add(doc.toObject(Note.class));
+                Note note = doc.toObject(Note.class);
+                note.setId(doc.getId()); // ⚠️ aquí guardas el documentId real
+                notes.add(note);
             }
-
             notesAdapter.setNotes(notes);
-
-
         });
     }
 
