@@ -1,5 +1,6 @@
 package es.fdi.ucm.pad.notnotion.data.adapter;
 
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -16,7 +17,9 @@ import es.fdi.ucm.pad.notnotion.data.model.Note;
 
 public class NotesAdapter extends RecyclerView.Adapter<NotesAdapter.NoteViewHolder> {
 
+    private static final String TAG = "BUSQUEDA_DEBUG";
     private List<Note> notes = new ArrayList<>();
+    private List<Note> fullList = new ArrayList<>();
 
     public interface OnNoteClickListener {
         void onNoteClick(Note note);
@@ -31,21 +34,18 @@ public class NotesAdapter extends RecyclerView.Adapter<NotesAdapter.NoteViewHold
     @NonNull
     @Override
     public NoteViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(parent.getContext())
+        View v = LayoutInflater.from(parent.getContext())
                 .inflate(R.layout.item_note, parent, false);
-        return new NoteViewHolder(view);
+        return new NoteViewHolder(v);
     }
 
     @Override
     public void onBindViewHolder(@NonNull NoteViewHolder holder, int position) {
         Note note = notes.get(position);
-
         holder.titleView.setText(note.getTitle());
 
         holder.itemView.setOnClickListener(v -> {
-            if (listener != null) {
-                listener.onNoteClick(note);
-            }
+            if (listener != null) listener.onNoteClick(note);
         });
     }
 
@@ -54,10 +54,40 @@ public class NotesAdapter extends RecyclerView.Adapter<NotesAdapter.NoteViewHold
         return notes.size();
     }
 
-    public void setNotes(List<Note> newNotes) {
+    public int getFullSize() {
+        return fullList.size();
+    }
+
+    public void setNotes(List<Note> list) {
+        Log.d(TAG, "NotesAdapter.setNotes lista recibida size=" + (list != null ? list.size() : 0));
+        fullList.clear();
         notes.clear();
-        if (newNotes != null)
-            notes.addAll(newNotes);
+
+        if (list != null) {
+            fullList.addAll(list);
+            notes.addAll(list);
+        }
+
+        notifyDataSetChanged();
+    }
+
+    public void filter(String text) {
+        Log.d(TAG, "NotesAdapter.filter text='" + text + "'");
+        notes.clear();
+
+        if (text == null || text.trim().isEmpty()) {
+            notes.addAll(fullList);
+        } else {
+            String q = text.toLowerCase();
+            for (Note n : fullList) {
+                Log.d("BUSQUEDA_DEBUG", "Filtrando: " + text + " | folder: " + n.getTitle());
+                if ((n.getTitle() != null && n.getTitle().toLowerCase().contains(q)) ||
+                        (n.getContent() != null && n.getContent().toLowerCase().contains(q))) {
+                    notes.add(n);
+                }
+            }
+        }
+        Log.d(TAG, "NotesAdapter.filter -> result size=" + notes.size());
         notifyDataSetChanged();
     }
 
@@ -66,7 +96,7 @@ public class NotesAdapter extends RecyclerView.Adapter<NotesAdapter.NoteViewHold
 
         public NoteViewHolder(@NonNull View itemView) {
             super(itemView);
-            titleView = itemView.findViewById(R.id.noteTitle);  // <- correcto
+            titleView = itemView.findViewById(R.id.noteTitle);
         }
     }
 }

@@ -29,6 +29,8 @@
             android:layout_height="wrap_content"
             android:hint="@string/buscar"
             android:inputType="text"
+            android:singleLine="true"
+            android:imeOptions="actionDone"
             android:paddingStart="16dp"
             android:paddingEnd="16dp"
             android:paddingTop="12dp"
