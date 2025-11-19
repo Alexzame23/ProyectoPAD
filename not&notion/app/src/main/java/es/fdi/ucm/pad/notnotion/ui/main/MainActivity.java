@@ -1,7 +1,6 @@
 package es.fdi.ucm.pad.notnotion.ui.main;
 
 import android.content.Intent;
-import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -9,15 +8,9 @@ import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.TextView;
-import android.view.MenuItem;
-import android.text.Editable;
-import android.text.TextWatcher;
-import android.widget.FrameLayout;
-import android.widget.ImageButton;
 import android.widget.PopupMenu;
 import android.widget.Toast;
 
-import com.google.android.material.textfield.TextInputEditText;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
@@ -29,7 +22,6 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.recyclerview.widget.GridLayoutManager;
-import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
@@ -49,6 +41,7 @@ import es.fdi.ucm.pad.notnotion.data.model.Folder;
 import es.fdi.ucm.pad.notnotion.data.model.Note;
 import es.fdi.ucm.pad.notnotion.data.model.User;
 import es.fdi.ucm.pad.notnotion.ui.Fragments.CalendarFragment;
+import es.fdi.ucm.pad.notnotion.ui.firebase.NotesMainFragment;
 import es.fdi.ucm.pad.notnotion.ui.Fragments.EditNoteActivity;
 import es.fdi.ucm.pad.notnotion.ui.profile.ProfileActivity;
 import es.fdi.ucm.pad.notnotion.ui.user_logging.LoginActivity;
@@ -186,10 +179,15 @@ public class MainActivity extends AppCompatActivity {
             bottomNavigation.setOnItemSelectedListener(item -> {
 
                 int id = item.getItemId();
-                contentContainer.removeAllViews();
+                contentContainer.removeAllViews(); // Limpiar contenedor antes de mostrar fragmento
 
                 // -------- TAB NOTAS --------
                 if (id == R.id.nav_notes) {
+                    // Sustituir la inflada directa por el fragmento de notas
+                    getSupportFragmentManager()
+                            .beginTransaction()
+                            .replace(R.id.contentContainer, new NotesMainFragment())
+                            .commit();
                     volverAlExploradorConUI();
 
                 }
