@@ -40,5 +40,10 @@
 
         <activity android:name=".ui.events.EventEditActivity" />
 
+        <activity
+            android:name=".ui.Fragments.EditNoteActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize"/>
+
     </application>
 </manifest>

@@ -4,9 +4,12 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+import android.widget.ImageView;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
+
+import com.squareup.picasso.Picasso;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -42,6 +45,20 @@ public class NotesAdapter extends RecyclerView.Adapter<NotesAdapter.NoteViewHold
 
         holder.titleView.setText(note.getTitle());
 
+        // Cargar imagen de portada si existe
+        if (note.getCoverImageUrl() != null && !note.getCoverImageUrl().isEmpty()) {
+            holder.coverImageView.setVisibility(View.VISIBLE);
+            Picasso.get()
+                    .load(note.getCoverImageUrl())
+                    .placeholder(R.drawable.ic_notes) // imagen mientras carga
+                    .error(R.drawable.ic_notes) // imagen si hay error
+                    .resize(200, 200) // redimensionar para ahorrar memoria
+                    .centerCrop()
+                    .into(holder.coverImageView);
+        } else {
+            holder.coverImageView.setVisibility(View.GONE);
+        }
+
         holder.itemView.setOnClickListener(v -> {
             if (listener != null) {
                 listener.onNoteClick(note);
@@ -63,10 +80,12 @@ public class NotesAdapter extends RecyclerView.Adapter<NotesAdapter.NoteViewHold
 
     static class NoteViewHolder extends RecyclerView.ViewHolder {
         TextView titleView;
+        ImageView coverImageView;
 
         public NoteViewHolder(@NonNull View itemView) {
             super(itemView);
-            titleView = itemView.findViewById(R.id.noteTitle);  // <- correcto
+            titleView = itemView.findViewById(R.id.noteTitle);
+            coverImageView = itemView.findViewById(R.id.noteCoverImage);
         }
     }
 }

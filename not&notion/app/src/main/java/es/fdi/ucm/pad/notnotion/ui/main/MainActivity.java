@@ -9,6 +9,7 @@ import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.TextView;
+import android.widget.ImageView;
 import android.view.MenuItem;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -52,6 +53,8 @@ import es.fdi.ucm.pad.notnotion.ui.Fragments.CalendarFragment;
 import es.fdi.ucm.pad.notnotion.ui.Fragments.EditNoteActivity;
 import es.fdi.ucm.pad.notnotion.ui.profile.ProfileActivity;
 import es.fdi.ucm.pad.notnotion.ui.user_logging.LoginActivity;
+import es.fdi.ucm.pad.notnotion.data.model.ContentBlock;
+import es.fdi.ucm.pad.notnotion.ui.views.TextEditorView;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -208,89 +211,31 @@ public class MainActivity extends AppCompatActivity {
         }
 
     }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+        Log.d("MainActivity", "onResume() llamado - recargando contenido");
+
+        // Recargar el contenido de la carpeta actual si existe
+        if (currentFolder != null) {
+            Log.d("MainActivity", "Recargando carpeta: " + currentFolder.getName());
+            loadFolderContent(currentFolder);
+        }
+    }
     private void mostrarPantallaEdicion(Note note) {
-        Log.d("EDIT_NOTE", "Entrando a mostrarPantallaEdicion");
-        if (note == null) {
-            Log.e("EDIT_NOTE", "Nota nula recibida");
-            return;
-        }
+        Log.d("EDIT_NOTE", "Lanzando EditNoteActivity");
 
-        FrameLayout contentContainer = findViewById(R.id.contentContainer);
-        if (contentContainer == null) {
-            Log.e("EDIT_NOTE", "contentContainer es null");
-            return;
-        }
+        // Crear el Intent para lanzar EditNoteActivity
+        Intent intent = new Intent(MainActivity.this, EditNoteActivity.class);
 
-        contentContainer.removeAllViews();
-        getLayoutInflater().inflate(R.layout.edit_note, contentContainer, true);
+        // Empaquetar los datos que necesita EditNoteActivity
+        intent.putExtra(EditNoteActivity.EXTRA_NOTE, note);
+        intent.putExtra(EditNoteActivity.EXTRA_FOLDER_ID, currentFolder.getId());
 
-        EditText etTitle = contentContainer.findViewById(R.id.etTitle);
-        EditText etContent = contentContainer.findViewById(R.id.etContent);
-        ImageButton btnSave = contentContainer.findViewById(R.id.btnSave);
-
-        etTitle.setText(note.getTitle());
-        etContent.setText(note.getContent());
-
-        btnSave.setOnClickListener(v -> {
-            FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
-            if (user == null) {
-                Log.e("SAVE_NOTE", "user es null");
-                Toast.makeText(this, "Error: usuario no logueado", Toast.LENGTH_SHORT).show();
-                return;
-            }
-
-            if (currentFolder == null) {
-                Log.e("SAVE_NOTE", "currentFolder es null");
-                Toast.makeText(this, "Error: carpeta no definida", Toast.LENGTH_SHORT).show();
-                return;
-            }
-
-            String userId = user.getUid();
-            String folderId = currentFolder.getId();
-            String noteId = note.getId();
-
-            note.setTitle(etTitle.getText().toString());
-            note.setContent(etContent.getText().toString());
-            note.setUpdatedAt(com.google.firebase.Timestamp.now());
-
-            FirebaseFirestore db = FirebaseFirestore.getInstance();
-
-            if (noteId == null) {
-                // Crear nueva nota
-                db.collection("users")
-                        .document(userId)
-                        .collection("folders")
-                        .document(folderId)
-                        .collection("notes")
-                        .add(note)
-                        .addOnSuccessListener(docRef -> {
-                            note.setId(docRef.getId());
-                            Toast.makeText(this, "Nota creada", Toast.LENGTH_SHORT).show();
-                            volverAlExploradorConUI();
-                        })
-                        .addOnFailureListener(e -> {
-                            Log.e("SAVE_NOTE", "Error al crear nota", e);
-                            Toast.makeText(this, "Error: " + e.getMessage(), Toast.LENGTH_LONG).show();
-                        });
-            } else {
-                // Actualizar nota existente
-                db.collection("users")
-                        .document(userId)
-                        .collection("folders")
-                        .document(folderId)
-                        .collection("notes")
-                        .document(noteId)
-                        .set(note, SetOptions.merge())
-                        .addOnSuccessListener(aVoid -> {
-                            Toast.makeText(this, "Nota actualizada", Toast.LENGTH_SHORT).show();
-                            volverAlExploradorConUI();
-                        })
-                        .addOnFailureListener(e -> {
-                            Log.e("SAVE_NOTE", "Error al actualizar nota", e);
-                            Toast.makeText(this, "Error: " + e.getMessage(), Toast.LENGTH_LONG).show();
-                        });
-            }
-        });
+        // Lanzar la Activity
+        startActivity(intent);
     }
 
     // Esta versión recarga la pantalla principal y vuelve a asignar adapters y listeners

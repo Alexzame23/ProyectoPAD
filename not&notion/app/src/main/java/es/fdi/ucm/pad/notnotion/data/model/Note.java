@@ -3,38 +3,43 @@ package es.fdi.ucm.pad.notnotion.data.model;
 import com.google.firebase.Timestamp;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
 
 public class Note implements Serializable{
     private String id;
     private String title;
-    private String content;
+    //private String content;
     private String folderId;
-    private Timestamp createdAt;
-    private Timestamp updatedAt;
+    private transient Timestamp createdAt;
+    private transient Timestamp updatedAt;
     private boolean isFavorite;
+    private String coverImageUrl;
+    private List<ContentBlock> contentBlocks;
 
-    // 🔹 Constructor vacío requerido por Firestore
+    // Constructor vacío requerido por Firestore
     public Note() {}
 
-    public Note(String id, String title, String content, String folderId, Timestamp createdAt, Timestamp updatedAt, boolean isFavorite) {
+    public Note(String id, String title, String folderId, Timestamp createdAt, Timestamp updatedAt, boolean isFavorite, String coverImageUrl, List<ContentBlock> contentBlocks) {
         this.id = id;
         this.title = title;
-        this.content = content;
         this.folderId = folderId;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
         this.isFavorite = isFavorite;
+        this.coverImageUrl = coverImageUrl;
+        this.contentBlocks = contentBlocks;
     }
 
-    // 🔹 Getters y Setters
+    // Getters y Setters
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
 
     public String getTitle() { return title; }
     public void setTitle(String title) { this.title = title; }
 
-    public String getContent() { return content; }
-    public void setContent(String content) { this.content = content; }
+    /*public String getContent() { return content; }
+    public void setContent(String content) { this.content = content; }*/
 
     public String getFolderId() { return folderId; }
     public void setFolderId(String folderId) { this.folderId = folderId; }
@@ -47,4 +52,22 @@ public class Note implements Serializable{
 
     public boolean isFavorite() { return isFavorite; }
     public void setFavorite(boolean favorite) { isFavorite = favorite; }
+
+    public String getCoverImageUrl() { return coverImageUrl;}
+    public void setCoverImageUrl(String coverImageUrl) { this.coverImageUrl = coverImageUrl;}
+
+    public List<ContentBlock> getContentBlocks() { return contentBlocks;}
+    public void setContentBlocks(List<ContentBlock> contentBlocks) { this.contentBlocks = contentBlocks;}
+
+    public String getContentAsPlainText() {
+        StringBuilder sb = new StringBuilder();
+        if (contentBlocks != null) {
+            for (ContentBlock block : contentBlocks) {
+                if (block.getType() == ContentBlock.TYPE_TEXT) {
+                    sb.append(block.getTextContent()).append("\n");
+                }
+            }
+        }
+        return sb.toString();
+    }
 }
