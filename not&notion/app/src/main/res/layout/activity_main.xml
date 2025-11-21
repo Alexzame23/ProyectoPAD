@@ -29,8 +29,7 @@
         android:contentDescription="@string/btnPerfil"
         android:src="@drawable/ic_user"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:tint="@color/light_brown"/>
+        app:layout_constraintTop_toTopOf="parent"/>
 
     <!-- Contenedor para contenido específico de cada pantalla -->
     <FrameLayout
