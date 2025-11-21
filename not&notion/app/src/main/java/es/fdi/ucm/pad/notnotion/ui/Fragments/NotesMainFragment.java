@@ -45,8 +45,8 @@ public class NotesMainFragment extends Fragment {
 
         foldersRecyclerView = view.findViewById(R.id.recyclerFolders);
         notesRecyclerView = view.findViewById(R.id.recyclerNotes);
-        busquedaBarra = view.findViewById(R.id.busquedaBarra);
-        emptyMessage = view.findViewById(R.id.emptyMessage);
+        //busquedaBarra = view.findViewById(R.id.busquedaBarra);
+        //emptyMessage = view.findViewById(R.id.emptyMessage);
         if (busquedaBarra == null) {
             Log.e("BUSQUEDA_DEBUG", "busquedaBarra es null!!");
         } else {
@@ -99,7 +99,7 @@ public class NotesMainFragment extends Fragment {
             public void onTextChanged(CharSequence s, int start, int before, int count) {
                 String query = s == null ? "" : s.toString();
                 foldersAdapter.filter(query);
-                notesAdapter.filter(query);
+                //notesAdapter.filter(query);
                 updateEmptyMessage();
             }
 
