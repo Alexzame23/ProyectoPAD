@@ -93,6 +93,16 @@ public class CalendarFragment extends Fragment {
         });
     }
 
+    @Override
+    public void onResume() {
+        super.onResume();
+
+        // Recargar eventos cuando vuelves al calendario
+        if (selectedDateMillis != 0) {
+            loadEventsForThisDay(selectedDateMillis);
+        }
+    }
+
     // ============================================================================
     //      CARGAR EVENTOS DESDE FIRESTORE FILTRADOS POR FECHA SELECCIONADA
     // ============================================================================
