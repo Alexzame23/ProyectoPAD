@@ -16,7 +16,6 @@
         android:contentDescription="@string/profile_picture"
         android:src="@drawable/ic_user"
         android:scaleType="centerCrop"
-        app:tint="@color/brown"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"/>
@@ -107,5 +106,17 @@
         app:layout_constraintTop_toBottomOf="@id/btnSendVerifyEmail"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"/>
+
+    <ImageButton
+        android:id="@+id/btnGoBackCalendar"
+        android:layout_width="56dp"
+        android:layout_height="56dp"
+        android:background="@drawable/bg_rounder"
+        android:src="@drawable/ic_return"
+        android:contentDescription="Volver"
+        android:scaleType="centerInside"
+        android:layout_margin="24dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

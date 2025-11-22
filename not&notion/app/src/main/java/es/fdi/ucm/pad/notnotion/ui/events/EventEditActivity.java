@@ -6,6 +6,7 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -106,6 +107,10 @@ public class EventEditActivity extends AppCompatActivity {
 
         // --- BOTÓN GUARDAR ---
         btnSave.setOnClickListener(v -> saveEvent());
+
+        // --- BOTÓN RETURN ---
+        ImageButton btnGoBack = findViewById(R.id.btnGoBackCalendar);
+        btnGoBack.setOnClickListener(v -> finish());
     }
 
     // ============================

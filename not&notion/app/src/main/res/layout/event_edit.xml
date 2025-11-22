@@ -1,62 +1,92 @@
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="24dp"
     android:background="@color/bg">
 
-    <LinearLayout
+    <!-- SCROLL DEL CONTENIDO -->
+    <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical">
+        android:layout_height="match_parent"
+        android:padding="24dp"
+        android:layout_marginBottom="80dp"
+        android:layout_marginTop="30dp">
 
-        <EditText
-            android:id="@+id/editEventTitle"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Título del evento" />
+            android:orientation="vertical">
 
-        <EditText
-            android:id="@+id/editEventDescription"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="Descripción"
-            android:layout_marginTop="16dp"/>
+            <TextView
+                android:id="@+id/titleAddEvent"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Añadir evento"
+                android:textSize="24sp"
+                android:textStyle="bold"
+                android:textColor="@color/black"
+                android:layout_marginBottom="20dp"/>
 
-        <!-- BOTÓN SELECCIONAR FECHA -->
-        <Button
-            android:id="@+id/btnPickDate"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Seleccionar fecha"
-            android:layout_marginTop="16dp" />
+            <EditText
+                android:id="@+id/editEventTitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Título del evento" />
 
-        <!-- BOTÓN SELECCIONAR HORA -->
-        <Button
-            android:id="@+id/btnPickTime"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Seleccionar hora"
-            android:layout_marginTop="12dp" />
+            <EditText
+                android:id="@+id/editEventDescription"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Descripción"
+                android:layout_marginTop="16dp"/>
 
-        <Button
-            android:id="@+id/btnSaveEvent"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Guardar"
-            android:layout_marginTop="24dp"
-            android:backgroundTint="@color/brown"
-            android:textColor="@android:color/white"/>
+            <!-- BOTÓN SELECCIONAR FECHA -->
+            <Button
+                android:id="@+id/btnPickDate"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Seleccionar fecha"
+                android:layout_marginTop="16dp" />
 
-        <Button
-            android:id="@+id/btnDeleteEvent"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Eliminar evento"
-            android:backgroundTint="#B00020"
-            android:textColor="@android:color/white"
-            android:layout_marginTop="12dp"
-            android:layout_marginStart="0dp"
-            android:layout_marginEnd="0dp"/>
+            <!-- BOTÓN SELECCIONAR HORA -->
+            <Button
+                android:id="@+id/btnPickTime"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Seleccionar hora"
+                android:layout_marginTop="12dp" />
 
-    </LinearLayout>
-</ScrollView>
+            <!-- GUARDAR -->
+            <Button
+                android:id="@+id/btnSaveEvent"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Guardar"
+                android:layout_marginTop="24dp"
+                android:backgroundTint="@color/brown"
+                android:textColor="@android:color/white"/>
+
+            <!-- ELIMINAR -->
+            <Button
+                android:id="@+id/btnDeleteEvent"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Eliminar evento"
+                android:backgroundTint="#B00020"
+                android:textColor="@android:color/white"
+                android:layout_marginTop="12dp"/>
+
+        </LinearLayout>
+    </ScrollView>
+
+    <ImageButton
+        android:id="@+id/btnGoBackCalendar"
+        android:layout_width="56dp"
+        android:layout_height="56dp"
+        android:layout_margin="24dp"
+        android:background="@drawable/bg_rounder"
+        android:src="@drawable/ic_return"
+        android:scaleType="centerInside"
+        android:contentDescription="Volver"
+        android:layout_gravity="bottom|start"/>
+
+</FrameLayout>
