@@ -132,7 +132,7 @@ public class MainActivity extends AppCompatActivity {
                         return true;
                     }
                     if (title.equals("Nueva nota")) {
-                        // TODO
+                        createNewNoteDialog();
                         return true;
                     }
                     return false;
@@ -213,6 +213,38 @@ public class MainActivity extends AppCompatActivity {
             });
         }
 
+    }
+
+    private void createNewNoteDialog() {
+        if (currentFolder == null) return;
+
+        final EditText input = new EditText(this);
+        input.setHint("Título de la nota");
+
+        new androidx.appcompat.app.AlertDialog.Builder(this)
+                .setTitle("Crear nueva nota")
+                .setView(input)
+                .setPositiveButton("Aceptar", (dialog, which) -> {
+                    String noteTitle = input.getText().toString().trim();
+
+                    if (noteTitle.isEmpty()) {
+                        noteTitle = "Nueva nota";
+                    }
+
+                    // Crear la nota vacía en Firestore
+                    notesManager.addNote(
+                            noteTitle,            // título
+                            "",
+                            currentFolder.getId(),// carpeta actual
+                            false                 // no favorita por defecto
+                    );
+
+                    loadFolderContent(currentFolder);
+
+                    Toast.makeText(this, "Nota creada correctamente", Toast.LENGTH_SHORT).show();
+                })
+                .setNegativeButton("Cancelar", (dialog, which) -> dialog.dismiss())
+                .show();
     }
 
     @Override

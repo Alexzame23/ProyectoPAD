@@ -181,8 +181,8 @@ public class EditNoteActivity extends AppCompatActivity {
 
                         Picasso.get()
                                 .load(selectedCoverUri)
-                                .placeholder(R.drawable.ic_notes)
-                                .error(R.drawable.ic_notes)
+                                .placeholder(R.drawable.icon_note)
+                                .error(R.drawable.icon_note)
                                 .into(coverImage);
 
                         Log.d(TAG, "Imagen de portada seleccionada: " + selectedCoverUri);
@@ -226,8 +226,8 @@ public class EditNoteActivity extends AppCompatActivity {
 
             Picasso.get()
                     .load(note.getCoverImageUrl())
-                    .placeholder(R.drawable.ic_notes)
-                    .error(R.drawable.ic_notes)
+                    .placeholder(R.drawable.icon_note)
+                    .error(R.drawable.icon_note)
                     .into(coverImage);
         }
 

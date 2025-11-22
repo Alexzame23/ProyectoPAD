@@ -19,8 +19,7 @@
         android:id="@+id/noteIcon"
         android:layout_width="48dp"
         android:layout_height="48dp"
-        android:src="@drawable/ic_notes"
-        app:tint="@color/brown" />
+        android:src="@drawable/icon_note" />
 
     <TextView
         android:id="@+id/noteTitle"

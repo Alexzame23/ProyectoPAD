@@ -11,8 +11,7 @@
         android:id="@+id/folderIcon"
         android:layout_width="48dp"
         android:layout_height="48dp"
-        android:src="@drawable/folder"
-        app:tint="@color/brown" />
+        android:src="@drawable/icon_folder" />
 
     <TextView
         android:id="@+id/folderName"

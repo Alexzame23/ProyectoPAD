@@ -63,7 +63,7 @@
             android:layout_width="56dp"
             android:layout_height="56dp"
             android:background="@android:color/transparent"
-            android:src="@drawable/ic_notes"
+            android:src="@drawable/icon_note"
             android:contentDescription="@string/desc_notes_button"
             android:layout_marginBottom="16dp"/>
 

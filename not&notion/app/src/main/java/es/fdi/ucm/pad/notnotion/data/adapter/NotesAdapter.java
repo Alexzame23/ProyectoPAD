@@ -50,8 +50,8 @@ public class NotesAdapter extends RecyclerView.Adapter<NotesAdapter.NoteViewHold
             holder.coverImageView.setVisibility(View.VISIBLE);
             Picasso.get()
                     .load(note.getCoverImageUrl())
-                    .placeholder(R.drawable.ic_notes) // imagen mientras carga
-                    .error(R.drawable.ic_notes) // imagen si hay error
+                    .placeholder(R.drawable.icon_note) // imagen mientras carga
+                    .error(R.drawable.icon_note) // imagen si hay error
                     .resize(200, 200) // redimensionar para ahorrar memoria
                     .centerCrop()
                     .into(holder.coverImageView);

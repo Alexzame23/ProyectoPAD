@@ -4,7 +4,7 @@
     <!-- Item Notas -->
     <item
         android:id="@+id/nav_notes"
-        android:icon="@drawable/ic_notes"
+        android:icon="@drawable/icon_note"
         android:title="@string/desc_notes_button" />
 
     <!-- Item Calendario -->

@@ -44,7 +44,7 @@ public class FoldersAdapter extends RecyclerView.Adapter<FoldersAdapter.FolderVi
     public void onBindViewHolder(@NonNull FolderViewHolder holder, int position) {
         Folder folder = folders.get(position);
         holder.folderName.setText(folder.getName());
-        holder.folderIcon.setImageResource(R.drawable.folder);
+        holder.folderIcon.setImageResource(R.drawable.icon_folder);
 
         holder.itemView.setOnClickListener(v -> {
             if (listener != null) listener.onFolderClick(folder);
