@@ -22,6 +22,7 @@ public class FoldersAdapter extends RecyclerView.Adapter<FoldersAdapter.FolderVi
     private List<Folder> folders = new ArrayList<>();
     private List<Folder> fullList = new ArrayList<>();
 
+    // ------------------- CLICK NORMAL --------------------
     public interface OnFolderClickListener {
         void onFolderClick(Folder folder);
     }
@@ -31,6 +32,19 @@ public class FoldersAdapter extends RecyclerView.Adapter<FoldersAdapter.FolderVi
     public void setOnFolderClickListener(OnFolderClickListener listener) {
         this.listener = listener;
     }
+
+    // ------------------- LONG CLICK --------------------
+    public interface OnFolderLongClickListener {
+        void onFolderLongClick(Folder folder, View view);
+    }
+
+    private OnFolderLongClickListener longClickListener;
+
+    public void setOnFolderLongClickListener(OnFolderLongClickListener longClickListener) {
+        this.longClickListener = longClickListener;
+    }
+
+    // -----------------------------------------------------
 
     @NonNull
     @Override
@@ -43,11 +57,19 @@ public class FoldersAdapter extends RecyclerView.Adapter<FoldersAdapter.FolderVi
     @Override
     public void onBindViewHolder(@NonNull FolderViewHolder holder, int position) {
         Folder folder = folders.get(position);
+
         holder.folderName.setText(folder.getName());
         holder.folderIcon.setImageResource(R.drawable.icon_folder);
 
+        // CLICK NORMAL
         holder.itemView.setOnClickListener(v -> {
             if (listener != null) listener.onFolderClick(folder);
+        });
+
+        // LONG CLICK (2 segundos)
+        holder.itemView.setOnLongClickListener(v -> {
+            if (longClickListener != null) longClickListener.onFolderLongClick(folder, v);
+            return true;
         });
     }
 
@@ -82,13 +104,11 @@ public class FoldersAdapter extends RecyclerView.Adapter<FoldersAdapter.FolderVi
         } else {
             String q = text.toLowerCase();
             for (Folder f : fullList) {
-                Log.d("BUSQUEDA_DEBUG", "Filtrando: " + text + " | folder: " + f.getName());
                 if (f.getName() != null && f.getName().toLowerCase().contains(q)) {
                     folders.add(f);
                 }
             }
         }
-        Log.d(TAG, "FoldersAdapter.filter -> result size=" + folders.size());
         notifyDataSetChanged();
     }
 

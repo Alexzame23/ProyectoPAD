@@ -212,6 +212,23 @@ public class MainActivity extends AppCompatActivity {
                 return true;
             });
         }
+        foldersAdapter.setOnFolderLongClickListener((folder, view) -> {
+            PopupMenu popup = new PopupMenu(MainActivity.this, view);
+            popup.getMenu().add("Añadir a favoritos");
+            popup.getMenu().add("Renombrar");
+            popup.getMenu().add("Eliminar");
+
+            popup.show();
+        });
+        notesAdapter.setOnNoteLongClickListener((note, view) -> {
+            PopupMenu popup = new PopupMenu(MainActivity.this, view);
+            popup.getMenu().add("Añadir a favoritos");
+            popup.getMenu().add("Renombrar");
+            popup.getMenu().add("Asociar a fecha");
+            popup.getMenu().add("Eliminar");
+
+            popup.show();
+        });
 
     }
 

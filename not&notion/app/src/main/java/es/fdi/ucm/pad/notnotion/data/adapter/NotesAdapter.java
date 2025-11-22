@@ -21,6 +21,7 @@ public class NotesAdapter extends RecyclerView.Adapter<NotesAdapter.NoteViewHold
 
     private List<Note> notes = new ArrayList<>();
 
+    // ------------------- CLICK NORMAL --------------------
     public interface OnNoteClickListener {
         void onNoteClick(Note note);
     }
@@ -30,6 +31,19 @@ public class NotesAdapter extends RecyclerView.Adapter<NotesAdapter.NoteViewHold
     public void setOnNoteClickListener(OnNoteClickListener listener) {
         this.listener = listener;
     }
+
+    // ------------------- LONG CLICK --------------------
+    public interface OnNoteLongClickListener {
+        void onNoteLongClick(Note note, View view);
+    }
+
+    private OnNoteLongClickListener longClickListener;
+
+    public void setOnNoteLongClickListener(OnNoteLongClickListener longClickListener) {
+        this.longClickListener = longClickListener;
+    }
+
+    // -----------------------------------------------------
 
     @NonNull
     @Override
@@ -45,24 +59,28 @@ public class NotesAdapter extends RecyclerView.Adapter<NotesAdapter.NoteViewHold
 
         holder.titleView.setText(note.getTitle());
 
-        // Cargar imagen de portada si existe
         if (note.getCoverImageUrl() != null && !note.getCoverImageUrl().isEmpty()) {
             holder.coverImageView.setVisibility(View.VISIBLE);
             Picasso.get()
                     .load(note.getCoverImageUrl())
-                    .placeholder(R.drawable.icon_note) // imagen mientras carga
-                    .error(R.drawable.icon_note) // imagen si hay error
-                    .resize(200, 200) // redimensionar para ahorrar memoria
+                    .placeholder(R.drawable.icon_note)
+                    .error(R.drawable.icon_note)
+                    .resize(200, 200)
                     .centerCrop()
                     .into(holder.coverImageView);
         } else {
             holder.coverImageView.setVisibility(View.GONE);
         }
 
+        // CLICK NORMAL
         holder.itemView.setOnClickListener(v -> {
-            if (listener != null) {
-                listener.onNoteClick(note);
-            }
+            if (listener != null) listener.onNoteClick(note);
+        });
+
+        // LONG CLICK
+        holder.itemView.setOnLongClickListener(v -> {
+            if (longClickListener != null) longClickListener.onNoteLongClick(note, v);
+            return true;
         });
     }
 
