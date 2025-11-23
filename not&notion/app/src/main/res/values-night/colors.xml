@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- FONDO GENERAL -->
+    <color name="bg">#161310</color> <!-- marrón oscuro elegante -->
+
+    <!-- TEXTOS -->
+    <color name="white">#FFFFFFFF</color>
+    <color name="black">#FFEFEFEF</color> <!-- gris cálido para no ser negro puro -->
+
+    <!-- PALETA MARRÓN ADAPTADA -->
+    <color name="brown">#C98B55</color> <!-- marrón claro -->
+    <color name="light_brown">#EBC5A4</color>
+    <color name="light_brown_transparent">#40EBC5A4</color>
+
+    <!-- AMARILLO ADAPTADO -->
+    <color name="light_yellow">#E6C26B</color>
+    <color name="light_yellow_transparent">#40E6C26B</color>
+
+    <!-- TEXTO BOTONES -->
+    <color name="text_button">#FFF2E4D8</color>
+
+    <!-- OTROS -->
+    <color name="transparent">#00000000</color>
+
+</resources>

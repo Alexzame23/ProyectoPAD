@@ -38,6 +38,11 @@
             android:name=".ui.profile.ProfileActivity"
             android:exported="false" />
 
+        <activity
+            android:name=".ui.profile.ProfileEditActivity"
+            android:exported="false" />
+
+
         <activity android:name=".ui.events.EventEditActivity" />
 
         <activity
