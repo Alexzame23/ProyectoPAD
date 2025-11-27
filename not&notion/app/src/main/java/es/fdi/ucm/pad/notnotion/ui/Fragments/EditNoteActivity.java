@@ -240,7 +240,7 @@ public class EditNoteActivity extends AppCompatActivity {
                 }
         );
 
-        /*// Lanzador para añadir imágenes al contenido
+        // Lanzador para añadir imágenes al contenido
         pickContentImageLauncher = registerForActivityResult(
                 new ActivityResultContracts.StartActivityForResult(),
                 result -> {
@@ -516,7 +516,7 @@ public class EditNoteActivity extends AppCompatActivity {
                     Toast.makeText(this, "Error al subir imagen: " + e.getMessage(),
                             Toast.LENGTH_SHORT).show();
                 });
-    }*/
+    }
 
     // Guarda la nota y cierra la Activity
     private void saveNoteAndFinish() {
@@ -549,7 +549,7 @@ public class EditNoteActivity extends AppCompatActivity {
             });
         } else {
             saveToFirestore(user.getUid());
-        }*/
+        }
         saveToFirestore(user.getUid());
     }
 
