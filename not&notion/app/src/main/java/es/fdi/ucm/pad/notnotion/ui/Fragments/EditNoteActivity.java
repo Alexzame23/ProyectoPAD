@@ -18,6 +18,7 @@ import android.widget.ImageView;
 import android.widget.PopupMenu;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.graphics.Bitmap;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
@@ -41,6 +42,7 @@ import es.fdi.ucm.pad.notnotion.data.firebase.NotesManager;
 import es.fdi.ucm.pad.notnotion.data.model.ContentBlock;
 import es.fdi.ucm.pad.notnotion.data.model.Note;
 import es.fdi.ucm.pad.notnotion.ui.views.TextEditorView;
+import es.fdi.ucm.pad.notnotion.utils.ImageHelper;
 
 // Activity encargada de editar notas comunicandose con MainActivity
 
@@ -167,30 +169,78 @@ public class EditNoteActivity extends AppCompatActivity {
         btnAddContent = findViewById(R.id.btnAddContent);
     }
 
+
     // Configura los lanzadores para seleccionar archivos
     private void setupActivityLaunchers() {
-        // Lanzador para seleccionar imagen de portada
+        // Lanzador para seleccionar imagen de PORTADA
         pickCoverLauncher = registerForActivityResult(
                 new ActivityResultContracts.StartActivityForResult(),
                 result -> {
                     if (result.getResultCode() == RESULT_OK && result.getData() != null) {
-                        selectedCoverUri = result.getData().getData();
+                        Uri selectedUri = result.getData().getData();
 
-                        coverImage.setVisibility(View.VISIBLE);
-                        btnAddCover.setVisibility(View.GONE);
+                        Log.d(TAG, "PORTADA: Imagen seleccionada");
+                        Log.d(TAG, "URI: " + selectedUri);
 
-                        Picasso.get()
-                                .load(selectedCoverUri)
-                                .placeholder(R.drawable.icon_note)
-                                .error(R.drawable.icon_note)
-                                .into(coverImage);
+                        // Convertir a Base64
+                        String base64Image = ImageHelper.convertImageToBase64(this, selectedUri);
 
-                        Log.d(TAG, "Imagen de portada seleccionada: " + selectedCoverUri);
+                        if (base64Image != null) {
+                            // Guardar el Base64
+                            note.setCoverImageUrl(base64Image);
+
+                            // Mostrar la imagen inmediatamente en la interfaz
+                            coverImage.setVisibility(View.VISIBLE);
+                            btnAddCover.setVisibility(View.GONE);
+
+                            // Convertir Base64 a Bitmap para mostrar
+                            Bitmap bitmap = ImageHelper.convertBase64ToBitmap(base64Image);
+                            if (bitmap != null) {
+                                coverImage.setImageBitmap(bitmap);
+                                Log.d(TAG, "Portada cargada exitosamente");
+                            }
+                        } else {
+                            Toast.makeText(this, "Error al procesar la imagen",
+                                    Toast.LENGTH_SHORT).show();
+                            Log.e(TAG, "Error al convertir imagen a Base64");
+                        }
                     }
                 }
         );
 
-        // Lanzador para añadir imágenes al contenido
+        // Lanzador para añadir imágenes al CONTENIDO
+        pickContentImageLauncher = registerForActivityResult(
+                new ActivityResultContracts.StartActivityForResult(),
+                result -> {
+                    if (result.getResultCode() == RESULT_OK && result.getData() != null) {
+                        Uri selectedUri = result.getData().getData();
+
+                        coverImage.setVisibility(View.VISIBLE);
+                        btnAddCover.setVisibility(View.GONE);
+                        Log.d(TAG, "CONTENIDO: Imagen seleccionada");
+                        Log.d(TAG, "URI: " + selectedUri);
+
+                        // Mostrar diálogo de progreso
+                        Toast.makeText(this, "Procesando imagen...", Toast.LENGTH_SHORT).show();
+
+                        // Convertir a Base64
+                        String base64Image = ImageHelper.convertImageToBase64(this, selectedUri);
+
+                        if (base64Image != null) {
+                            // Añadir al editor
+                            textEditor.addImageBlock(base64Image);
+                            Toast.makeText(this, "Imagen añadida", Toast.LENGTH_SHORT).show();
+                            Log.d(TAG, "Imagen añadida al contenido");
+                        } else {
+                            Toast.makeText(this, "Error al procesar la imagen",
+                                    Toast.LENGTH_SHORT).show();
+                            Log.e(TAG, "Error al convertir imagen a Base64");
+                        }
+                    }
+                }
+        );
+
+        /*// Lanzador para añadir imágenes al contenido
         pickContentImageLauncher = registerForActivityResult(
                 new ActivityResultContracts.StartActivityForResult(),
                 result -> {
@@ -235,11 +285,14 @@ public class EditNoteActivity extends AppCompatActivity {
             coverImage.setVisibility(View.VISIBLE);
             btnAddCover.setVisibility(View.GONE);
 
-            Picasso.get()
-                    .load(note.getCoverImageUrl())
-                    .placeholder(R.drawable.icon_note)
-                    .error(R.drawable.icon_note)
-                    .into(coverImage);
+            // Convertir Base64 a Bitmap
+            Bitmap bitmap = ImageHelper.convertBase64ToBitmap(note.getCoverImageUrl());
+            if (bitmap != null) {
+                coverImage.setImageBitmap(bitmap);
+                Log.d(TAG, "✓ Portada cargada desde Base64");
+            } else {
+                Log.e(TAG, "✗ Error al decodificar portada");
+            }
         }
 
         // Cargar contenido en el editor
@@ -463,7 +516,7 @@ public class EditNoteActivity extends AppCompatActivity {
                     Toast.makeText(this, "Error al subir imagen: " + e.getMessage(),
                             Toast.LENGTH_SHORT).show();
                 });
-    }
+    }*/
 
     // Guarda la nota y cierra la Activity
     private void saveNoteAndFinish() {
@@ -496,7 +549,8 @@ public class EditNoteActivity extends AppCompatActivity {
             });
         } else {
             saveToFirestore(user.getUid());
-        }
+        }*/
+        saveToFirestore(user.getUid());
     }
 
     // Guarda la nota en Firestore.

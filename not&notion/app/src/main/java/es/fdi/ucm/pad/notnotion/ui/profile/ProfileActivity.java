@@ -3,9 +3,7 @@ package es.fdi.ucm.pad.notnotion.ui.profile;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
-import android.view.View;
 import android.widget.Button;
-import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -23,8 +21,8 @@ import es.fdi.ucm.pad.notnotion.ui.user_logging.LoginActivity;
 public class ProfileActivity extends AppCompatActivity {
 
     private ImageView imgProfilePhoto;
-    private TextView tvEmail, tvName, tvUid, tvVerified;
-    private Button btnLogout, btnSendVerifyEmail;
+    private TextView tvEmail, tvName, tvUid;
+    private Button btnLogout, btnEditProfile;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -36,15 +34,12 @@ public class ProfileActivity extends AppCompatActivity {
         tvEmail         = findViewById(R.id.tvEmail);
         tvName          = findViewById(R.id.tvName);
         tvUid           = findViewById(R.id.tvUid);
-        tvVerified      = findViewById(R.id.tvVerified);
         btnLogout       = findViewById(R.id.btnLogout);
-        btnSendVerifyEmail = findViewById(R.id.btnSendVerifyEmail);
+        btnEditProfile  = findViewById(R.id.btnEditProfile);
 
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
 
-        // ---------------------------------------------------------
-        //      SI NO HAY USUARIO → REDIRIGIR A LOGIN
-        // ---------------------------------------------------------
+        // Si no hay usuario → login
         if (user == null) {
             Toast.makeText(this, "No hay usuario logueado.", Toast.LENGTH_SHORT).show();
             startActivity(new Intent(this, LoginActivity.class));
@@ -52,40 +47,33 @@ public class ProfileActivity extends AppCompatActivity {
             return;
         }
 
+        // Cargar info inicial
+        updateUserUI(user);
 
-        // ---------------------------------------------------------
-        //      RECARGAR INFO DEL USUARIO (RELOAD)
-        // ---------------------------------------------------------
-        user.reload().addOnSuccessListener(unused -> {
-            updateUserUI(user);  // 🔥 Actualizamos toda la interfaz aquí
-        });
-
-
-        // ---------------------------------------------------------
-        //      LOGOUT
-        // ---------------------------------------------------------
+        // Logout
         btnLogout.setOnClickListener(v -> logout());
 
-        ImageButton btnGoBack = findViewById(R.id.btnGoBackCalendar);
-        btnGoBack.setOnClickListener(v -> finish());
+        // Botón editar perfil
+        btnEditProfile.setOnClickListener(v -> {
+            Intent intent = new Intent(this, ProfileEditActivity.class);
+            startActivity(intent);
+        });
+
+        // Botón atrás
+        findViewById(R.id.btnGoBackCalendar).setOnClickListener(v -> finish());
     }
 
 
     // ********************************************************************
-    //   ACTUALIZA TODA LA UI CON LOS DATOS DEL USUARIO (MODULARIZADO)
+    //   ACTUALIZA LA UI CON LOS DATOS DEL USUARIO
     // ********************************************************************
     private void updateUserUI(FirebaseUser user) {
-
-        // --- Info Básica ---
         tvEmail.setText("Correo: " + user.getEmail());
-        tvName.setText("Nombre: " +
-                (user.getDisplayName() != null ? user.getDisplayName() : "No disponible"));
+        tvName.setText("Nombre: " + (user.getDisplayName() != null ?
+                user.getDisplayName() : "No disponible"));
         tvUid.setText("UID: " + user.getUid());
 
-        boolean verified = user.isEmailVerified();
-        tvVerified.setText(verified ? "Correo verificado ✓" : "Correo no verificado ✗");
-
-        // --- Foto del usuario ---
+        // Foto
         Uri photoUri = user.getPhotoUrl();
         if (photoUri != null) {
             Picasso.get()
@@ -96,27 +84,6 @@ public class ProfileActivity extends AppCompatActivity {
         } else {
             imgProfilePhoto.setImageResource(R.drawable.ic_user);
         }
-
-        // ---------------------------------------------------------
-        //      BOTÓN "ENVIAR VERIFICACIÓN" (solo si NO está verificado)
-        // ---------------------------------------------------------
-        if (!verified) {
-            btnSendVerifyEmail.setVisibility(View.VISIBLE);
-
-            btnSendVerifyEmail.setOnClickListener(v -> {
-                user.sendEmailVerification()
-                        .addOnSuccessListener(aVoid ->
-                                Toast.makeText(this,
-                                        "Correo de verificación enviado.",
-                                        Toast.LENGTH_LONG).show())
-                        .addOnFailureListener(e ->
-                                Toast.makeText(this,
-                                        "Error enviando email: " + e.getMessage(),
-                                        Toast.LENGTH_LONG).show());
-            });
-        } else {
-            btnSendVerifyEmail.setVisibility(View.GONE);
-        }
     }
 
 
@@ -125,7 +92,7 @@ public class ProfileActivity extends AppCompatActivity {
     // ********************************************************************
     private void logout() {
         FirebaseAuth.getInstance().signOut();
-        AuthUI.getInstance().signOut(this); // Para cerrar sesión de Google
+        AuthUI.getInstance().signOut(this); // Cierra sesión Google
         startActivity(new Intent(this, LoginActivity.class));
         finish();
     }
