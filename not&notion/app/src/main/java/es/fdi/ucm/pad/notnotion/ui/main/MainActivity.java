@@ -1,6 +1,9 @@
 package es.fdi.ucm.pad.notnotion.ui.main;
 
+import android.app.DatePickerDialog;
+import android.app.TimePickerDialog;
 import android.content.Intent;
+import android.icu.util.Calendar;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
@@ -19,6 +22,7 @@ import android.widget.PopupMenu;
 import android.widget.Toast;
 
 import com.google.android.material.textfield.TextInputEditText;
+import com.google.firebase.Timestamp;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
@@ -41,6 +45,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import es.fdi.ucm.pad.notnotion.R;
+import es.fdi.ucm.pad.notnotion.data.firebase.CalendarEventsManager;
 import es.fdi.ucm.pad.notnotion.data.firebase.FirebaseFirestoreManager;
 import es.fdi.ucm.pad.notnotion.data.adapter.FoldersAdapter;
 import es.fdi.ucm.pad.notnotion.data.adapter.NotesAdapter;
@@ -218,16 +223,88 @@ public class MainActivity extends AppCompatActivity {
             popup.show();
         });
         notesAdapter.setOnNoteLongClickListener((note, view) -> {
+
             PopupMenu popup = new PopupMenu(MainActivity.this, view);
-            popup.getMenu().add("Añadir a favoritos");
-            popup.getMenu().add("Renombrar");
-            popup.getMenu().add("Asociar a fecha");
-            popup.getMenu().add("Eliminar");
+            popup.getMenu().add(0, 0, 0, "Añadir a favoritos");
+            popup.getMenu().add(0, 1, 1, "Renombrar");
+            popup.getMenu().add(0, 2, 2, "Asociar a fecha");
+            popup.getMenu().add(0, 3, 3, "Eliminar");
+
+            popup.setOnMenuItemClickListener(item -> {
+
+                switch (item.getItemId()) {
+
+                    case 2: // Asociar fecha
+                        abrirSelectorFecha(note);
+                        return true;
+                }
+
+                return false;
+            });
 
             popup.show();
         });
 
+
     }
+
+    private void abrirSelectorFecha(Note note) {
+
+        Calendar calendar = Calendar.getInstance();
+
+        DatePickerDialog dateDialog = new DatePickerDialog(
+                this,
+                (view, year, month, dayOfMonth) -> {
+
+                    calendar.set(Calendar.YEAR, year);
+                    calendar.set(Calendar.MONTH, month);
+                    calendar.set(Calendar.DAY_OF_MONTH, dayOfMonth);
+
+                    TimePickerDialog timeDialog = new TimePickerDialog(
+                            this,
+                            (timeView, hour, minute) -> {
+
+                                calendar.set(Calendar.HOUR_OF_DAY, hour);
+                                calendar.set(Calendar.MINUTE, minute);
+
+                                long millis = calendar.getTimeInMillis();
+                                crearEventoDesdeNota(note, millis);
+                            },
+                            calendar.get(Calendar.HOUR_OF_DAY),
+                            calendar.get(Calendar.MINUTE),
+                            true
+                    );
+
+                    timeDialog.show();
+                },
+                calendar.get(Calendar.YEAR),
+                calendar.get(Calendar.MONTH),
+                calendar.get(Calendar.DAY_OF_MONTH)
+        );
+
+        dateDialog.show();
+    }
+
+    private void crearEventoDesdeNota(Note note, long millis) {
+
+        Timestamp ts = new Timestamp(new java.util.Date(millis));
+
+        CalendarEventsManager evManager = new CalendarEventsManager();
+
+        evManager.addEvent(
+                note.getTitle(),
+                "",
+                ts,
+                ts,
+                note.getId(), // vincular nota
+                0,
+                false,
+                null
+        );
+
+        Toast.makeText(this, "Nota asociada al calendario", Toast.LENGTH_SHORT).show();
+    }
+
 
     private void createNewNoteDialog() {
         if (currentFolder == null) return;
