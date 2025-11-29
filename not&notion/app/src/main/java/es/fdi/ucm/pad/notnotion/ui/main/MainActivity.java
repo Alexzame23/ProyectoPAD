@@ -252,6 +252,9 @@ public class MainActivity extends AppCompatActivity {
 
             popup.setOnMenuItemClickListener(item -> {
                 switch (item.getItemId()) {
+                    case 0:
+                        confirmRenameFolder(folder);
+                        return true;
                     case 1:
                         confirmDeleteFolder(folder);
                         return true;
@@ -271,7 +274,9 @@ public class MainActivity extends AppCompatActivity {
             popup.setOnMenuItemClickListener(item -> {
 
                 switch (item.getItemId()) {
-
+                    case 0:
+                        confirmRenameNote(note);
+                        return true;
                     case 1: // Asociar fecha
                         abrirSelectorFecha(note);
                         return true;
@@ -653,6 +658,62 @@ public class MainActivity extends AppCompatActivity {
         String query = busquedaBarra.getText().toString().trim();
         foldersAdapter.filter(query);
         notesAdapter.filter(query);
+    }
+
+    private void confirmRenameNote(@NonNull Note note) {
+
+        final EditText input = new EditText(this);
+        input.setText(note.getTitle());
+
+        new androidx.appcompat.app.AlertDialog.Builder(this)
+                .setTitle("Renombrar nota")
+                .setView(input)
+                .setPositiveButton("Aceptar", (dialog, which) -> {
+
+                    String newName = input.getText().toString().trim();
+                    if (newName.isEmpty()) {
+                        Toast.makeText(this, "El nombre no puede estar vacío", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+
+                    note.setTitle(newName);
+                    note.setUpdatedAt(com.google.firebase.Timestamp.now());
+
+                    notesManager.updateNote(note);
+
+                    loadFolderContent(currentFolder);
+                    Toast.makeText(this, "Nota renombrada", Toast.LENGTH_SHORT).show();
+                })
+                .setNegativeButton("Cancelar", null)
+                .show();
+    }
+
+    private void confirmRenameFolder(@NonNull Folder folder) {
+
+        final EditText input = new EditText(this);
+        input.setText(folder.getName());
+
+        new androidx.appcompat.app.AlertDialog.Builder(this)
+                .setTitle("Renombrar carpeta")
+                .setView(input)
+                .setPositiveButton("Aceptar", (dialog, which) -> {
+
+                    String newName = input.getText().toString().trim();
+                    if (newName.isEmpty()) {
+                        Toast.makeText(this, "El nombre no puede estar vacío", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+
+                    folder.setName(newName);
+                    folder.setUpdatedAt(com.google.firebase.Timestamp.now());
+
+                    foldersManager.updateFolder(folder);
+
+                    loadFolderContent(currentFolder);
+                    Toast.makeText(this, "Carpeta renombrada", Toast.LENGTH_SHORT).show();
+                })
+                .setNegativeButton("Cancelar", null)
+                .show();
     }
 
 }
