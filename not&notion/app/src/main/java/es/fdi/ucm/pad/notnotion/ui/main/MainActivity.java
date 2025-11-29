@@ -52,6 +52,7 @@ import es.fdi.ucm.pad.notnotion.data.adapter.FoldersAdapter;
 import es.fdi.ucm.pad.notnotion.data.adapter.NotesAdapter;
 import es.fdi.ucm.pad.notnotion.data.firebase.FoldersManager;
 import es.fdi.ucm.pad.notnotion.data.firebase.NotesManager;
+import es.fdi.ucm.pad.notnotion.data.model.CalendarEvent;
 import es.fdi.ucm.pad.notnotion.data.model.Folder;
 import es.fdi.ucm.pad.notnotion.data.model.Note;
 import es.fdi.ucm.pad.notnotion.data.model.User;
@@ -614,14 +615,11 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void confirmDeleteNote(@NonNull Note note) {
+
         new androidx.appcompat.app.AlertDialog.Builder(this)
-                .setTitle("Eliminar nota")
-                .setMessage("¿Seguro que quieres eliminar la nota \"" + (note.getTitle() == null ? "" : note.getTitle()) + "\"?")
-                .setPositiveButton("Eliminar", (d, w) -> {
-                    notesManager.deleteNote(currentFolder.getId(), note.getId());
-                    loadFolderContent(currentFolder);
-                    Toast.makeText(this, "Nota eliminada", Toast.LENGTH_SHORT).show();
-                })
+                .setTitle("Eliminar nota \"" + note.getTitle() + "\"")
+                .setMessage("¿Seguro que quieres eliminar esta nota?")
+                .setPositiveButton("Eliminar", (dialog, which) -> deleteNoteWithEvents(note))
                 .setNegativeButton("Cancelar", null)
                 .show();
     }
@@ -714,6 +712,35 @@ public class MainActivity extends AppCompatActivity {
                 })
                 .setNegativeButton("Cancelar", null)
                 .show();
+    }
+
+    private void deleteNoteWithEvents(@NonNull Note note) {
+
+        CalendarEventsManager evManager = new CalendarEventsManager();
+
+        // Primero buscar eventos asociados a esta nota
+        evManager.getEventsByNote(note.getId(), querySnapshot -> {
+
+            if (!querySnapshot.isEmpty()) {
+                // Hay eventos asociados → borrarlos
+                for (QueryDocumentSnapshot doc : querySnapshot) {
+                    CalendarEvent ev = doc.toObject(CalendarEvent.class);
+                    ev.setId(doc.getId());
+
+                    evManager.deleteEvent(ev, () ->
+                            Log.d("DELETE_NOTE", "Evento eliminado: " + ev.getId())
+                    );
+                }
+            }
+
+            // Después de eliminar los eventos → eliminar la nota
+            notesManager.deleteNote(note.getFolderId(), note.getId());
+
+            Toast.makeText(this, "Nota eliminada", Toast.LENGTH_SHORT).show();
+
+            // Recargar carpeta después de borrar todo
+            loadFolderContent(currentFolder);
+        });
     }
 
 }
