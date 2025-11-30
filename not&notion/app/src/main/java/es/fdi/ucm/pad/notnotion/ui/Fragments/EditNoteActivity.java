@@ -31,9 +31,6 @@ import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.SetOptions;
-import com.google.firebase.storage.FirebaseStorage;
-import com.google.firebase.storage.StorageReference;
-import com.squareup.picasso.Picasso;
 
 import java.util.ArrayList;
 import java.util.UUID;
@@ -75,7 +72,6 @@ public class EditNoteActivity extends AppCompatActivity {
     // Datos de la nota
     private Note note;
     private String folderId;
-    private Uri selectedCoverUri; // Imagen temporal de portada antes de subirla
 
     // Estado de los botones de formato
     private boolean isBoldActive = false;
@@ -84,8 +80,6 @@ public class EditNoteActivity extends AppCompatActivity {
 
     // Firebase
     private FirebaseFirestore db;
-    private FirebaseStorage storage;
-    private StorageReference storageRef;
     private NotesManager notesManager;
 
     // Lanzadores de actividad para seleccionar archivos
@@ -102,8 +96,6 @@ public class EditNoteActivity extends AppCompatActivity {
 
         // Inicializar Firebase
         db = FirebaseFirestore.getInstance();
-        storage = FirebaseStorage.getInstance();
-        storageRef = storage.getReference();
         notesManager = new NotesManager();
 
         // Inicializar vistas SIEMPRE antes de cargar datos
@@ -139,30 +131,30 @@ public class EditNoteActivity extends AppCompatActivity {
 
 
     // Carga los datos que MainActivity nos pasó mediante el Intent.
-     private boolean loadIntentData() {
+    private boolean loadIntentData() {
 
-         Intent intent = getIntent();
+        Intent intent = getIntent();
 
-         // Opción 1: venimos desde MainActivity (nota completa)
-         note = (Note) intent.getSerializableExtra(EXTRA_NOTE);
-         folderId = intent.getStringExtra(EXTRA_FOLDER_ID);
+        // Opción 1: venimos desde MainActivity (nota completa)
+        note = (Note) intent.getSerializableExtra(EXTRA_NOTE);
+        folderId = intent.getStringExtra(EXTRA_FOLDER_ID);
 
-         if (note != null && folderId != null) {
-             Log.d(TAG, "Nota recibida completa desde MainActivity");
-             return true;
-         }
+        if (note != null && folderId != null) {
+            Log.d(TAG, "Nota recibida completa desde MainActivity");
+            return true;
+        }
 
-         // Opción 2: venimos desde el calendario
-         String noteId = intent.getStringExtra("noteId");
-         if (noteId != null) {
-             Log.d(TAG, "Nota recibida desde calendario con noteId=" + noteId);
-             loadNoteFromFirestore(noteId);  // <-- AQUÍ CARGAS LA NOTA
-             return false;
-         }
+        // Opción 2: venimos desde el calendario
+        String noteId = intent.getStringExtra("noteId");
+        if (noteId != null) {
+            Log.d(TAG, "Nota recibida desde calendario con noteId=" + noteId);
+            loadNoteFromFirestore(noteId);  // <-- AQUÍ CARGAS LA NOTA
+            return false;
+        }
 
-         Log.e(TAG, "No se recibió ni nota ni noteId");
-         return false;
-     }
+        Log.e(TAG, "No se recibió ni nota ni noteId");
+        return false;
+    }
 
 
 
@@ -203,7 +195,7 @@ public class EditNoteActivity extends AppCompatActivity {
                         String base64Image = ImageHelper.convertImageToBase64(this, selectedUri);
 
                         if (base64Image != null) {
-                            // Guardar el Base64
+                            // Guardar el Base64 en la nota
                             note.setCoverImageUrl(base64Image);
 
                             // Mostrar la imagen inmediatamente en la interfaz
@@ -232,8 +224,6 @@ public class EditNoteActivity extends AppCompatActivity {
                     if (result.getResultCode() == RESULT_OK && result.getData() != null) {
                         Uri selectedUri = result.getData().getData();
 
-                        coverImage.setVisibility(View.VISIBLE);
-                        btnAddCover.setVisibility(View.GONE);
                         Log.d(TAG, "CONTENIDO: Imagen seleccionada");
                         Log.d(TAG, "URI: " + selectedUri);
 
@@ -253,26 +243,6 @@ public class EditNoteActivity extends AppCompatActivity {
                                     Toast.LENGTH_SHORT).show();
                             Log.e(TAG, "Error al convertir imagen a Base64");
                         }
-                    }
-                }
-        );
-
-        // Lanzador para añadir imágenes al contenido
-        pickContentImageLauncher = registerForActivityResult(
-                new ActivityResultContracts.StartActivityForResult(),
-                result -> {
-                    if (result.getResultCode() == RESULT_OK && result.getData() != null) {
-                        Uri imageUri = result.getData().getData();
-
-                        Log.d(TAG, "Imagen de contenido seleccionada, subiendo...");
-
-                        // Subir la imagen a Firebase Storage
-                        uploadImageToStorage(imageUri, url -> {
-                            // Una vez subida, añadir el bloque al editor
-                            textEditor.addImageBlock(url);
-                            Toast.makeText(this, "Imagen añadida", Toast.LENGTH_SHORT).show();
-                            Log.d(TAG, "Imagen subida y añadida al editor: " + url);
-                        });
                     }
                 }
         );
@@ -509,32 +479,6 @@ public class EditNoteActivity extends AppCompatActivity {
                 .show();
     }
 
-    // Sube una imagen a Firebase Storage y devuelve la URL mediante un callback
-    private void uploadImageToStorage(Uri imageUri, OnUploadCompleteListener listener) {
-        // Generar un nombre único para la imagen
-        String filename = "images/" + UUID.randomUUID().toString() + ".jpg";
-        StorageReference imageRef = storageRef.child(filename);
-
-        Log.d(TAG, "Iniciando subida de imagen: " + filename);
-
-        // Subir el archivo
-        imageRef.putFile(imageUri)
-                .addOnSuccessListener(taskSnapshot -> {
-                    Log.d(TAG, "Imagen subida exitosamente");
-
-                    // Obtener la URL de descarga
-                    imageRef.getDownloadUrl().addOnSuccessListener(uri -> {
-                        Log.d(TAG, "URL de imagen obtenida: " + uri.toString());
-                        listener.onUploadComplete(uri.toString());
-                    });
-                })
-                .addOnFailureListener(e -> {
-                    Log.e(TAG, "Error al subir imagen", e);
-                    Toast.makeText(this, "Error al subir imagen: " + e.getMessage(),
-                            Toast.LENGTH_SHORT).show();
-                });
-    }
-
     // Guarda la nota y cierra la Activity
     private void saveNoteAndFinish() {
         Log.d(TAG, "Iniciando guardado de nota");
@@ -558,15 +502,6 @@ public class EditNoteActivity extends AppCompatActivity {
         note.setFolderId(folderId);
         note.setUpdatedAt(Timestamp.now());
 
-        if (selectedCoverUri != null) {
-            Log.d(TAG, "Subiendo nueva imagen de portada");
-            uploadImageToStorage(selectedCoverUri, url -> {
-                note.setCoverImageUrl(url);
-                saveToFirestore(user.getUid());
-            });
-        } else {
-            saveToFirestore(user.getUid());
-        }
         saveToFirestore(user.getUid());
     }
 
@@ -604,9 +539,6 @@ public class EditNoteActivity extends AppCompatActivity {
                     finish();
                 });
     }
-
-
-
 
     // Guarda la nota en Firestore.
     private void saveToFirestore(String userId) {
@@ -658,10 +590,5 @@ public class EditNoteActivity extends AppCompatActivity {
                                 Toast.LENGTH_SHORT).show();
                     });
         }
-    }
-
-    // Interfaz para el callback de subida de imágenes
-    private interface OnUploadCompleteListener {
-        void onUploadComplete(String url);
     }
 }
