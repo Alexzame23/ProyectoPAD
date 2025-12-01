@@ -1,5 +1,6 @@
 package es.fdi.ucm.pad.notnotion.ui.profile;
 
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.widget.Button;
@@ -15,6 +16,7 @@ import com.google.firebase.auth.FirebaseUser;
 
 import es.fdi.ucm.pad.notnotion.R;
 import es.fdi.ucm.pad.notnotion.ui.user_logging.LoginActivity;
+import es.fdi.ucm.pad.notnotion.utils.LocaleHelper;
 import es.fdi.ucm.pad.notnotion.utils.UserProfileHelper;
 
 public class ProfileActivity extends AppCompatActivity {
@@ -67,6 +69,10 @@ public class ProfileActivity extends AppCompatActivity {
 
         // Atrás
         findViewById(R.id.btnGoBackCalendar).setOnClickListener(v -> finish());
+    }
+    @Override
+    protected void attachBaseContext(Context newBase) {
+        super.attachBaseContext(LocaleHelper.applyLocale(newBase));
     }
 
 
