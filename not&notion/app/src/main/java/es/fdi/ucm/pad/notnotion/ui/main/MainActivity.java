@@ -166,17 +166,17 @@ public class MainActivity extends AppCompatActivity {
 
             btnAddNote.setOnClickListener(v -> {
                 PopupMenu popup = new PopupMenu(MainActivity.this, btnAddNote);
-                popup.getMenu().add("Nueva carpeta");
-                popup.getMenu().add("Nueva nota");
+                popup.getMenu().add(getString(R.string.new_folder));
+                popup.getMenu().add(getString(R.string.new_note));
 
                 popup.setOnMenuItemClickListener(itm -> {
                     String title = itm.getTitle().toString();
 
-                    if (title.equals("Nueva carpeta")) {
+                    if (title.equals(getString(R.string.new_folder))) {
                         createNewFolderDialog();
                         return true;
                     }
-                    if (title.equals("Nueva nota")) {
+                    if (title.equals(getString(R.string.new_note))){
                         createNewNoteDialog();
                         return true;
                     }
@@ -255,8 +255,8 @@ public class MainActivity extends AppCompatActivity {
         }
         foldersAdapter.setOnFolderLongClickListener((folder, view) -> {
             PopupMenu popup = new PopupMenu(MainActivity.this, view);
-            popup.getMenu().add(0, 0, 0, "Renombrar");
-            popup.getMenu().add(0, 1, 1, "Eliminar");
+            popup.getMenu().add(0, 0, 0, getText(R.string.rename));
+            popup.getMenu().add(0, 1, 1, getText(R.string.eliminar));
 
             popup.setOnMenuItemClickListener(item -> {
                 switch (item.getItemId()) {
@@ -275,9 +275,9 @@ public class MainActivity extends AppCompatActivity {
         notesAdapter.setOnNoteLongClickListener((note, view) -> {
 
             PopupMenu popup = new PopupMenu(MainActivity.this, view);
-            popup.getMenu().add(0, 0, 0, "Renombrar");
-            popup.getMenu().add(0, 1, 1, "Asociar a fecha");
-            popup.getMenu().add(0, 2, 2, "Eliminar");
+            popup.getMenu().add(0, 0, 0, getText(R.string.rename));
+            popup.getMenu().add(0, 1, 1, getText(R.string.anadir_evento));
+            popup.getMenu().add(0, 2, 2, getText(R.string.eliminar));
 
             popup.setOnMenuItemClickListener(item -> {
 
@@ -356,7 +356,7 @@ public class MainActivity extends AppCompatActivity {
                 null
         );
 
-        Toast.makeText(this, "Nota asociada al calendario", Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, getText(R.string.note_created_check), Toast.LENGTH_SHORT).show();
     }
 
 
@@ -364,12 +364,12 @@ public class MainActivity extends AppCompatActivity {
         if (currentFolder == null) return;
 
         final EditText input = new EditText(this);
-        input.setHint("Título de la nota");
+        input.setHint(getText(R.string.note_title));
 
         new androidx.appcompat.app.AlertDialog.Builder(this)
-                .setTitle("Crear nueva nota")
+                .setTitle(getText(R.string.create_new_note))
                 .setView(input)
-                .setPositiveButton("Aceptar", (dialog, which) -> {
+                .setPositiveButton(getText(R.string.guardar_cambios), (dialog, which) -> {
                     String noteTitle = input.getText().toString().trim();
 
                     if (noteTitle.isEmpty()) {
@@ -386,9 +386,9 @@ public class MainActivity extends AppCompatActivity {
 
                     loadFolderContent(currentFolder);
 
-                    Toast.makeText(this, "Nota creada correctamente", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, getText(R.string.note_created_check), Toast.LENGTH_SHORT).show();
                 })
-                .setNegativeButton("Cancelar", (dialog, which) -> dialog.dismiss())
+                .setNegativeButton(getText(R.string.cancelar), (dialog, which) -> dialog.dismiss())
                 .show();
     }
 
@@ -455,15 +455,15 @@ public class MainActivity extends AppCompatActivity {
         if (btnAddNote != null) {
             btnAddNote.setOnClickListener(v -> {
                 PopupMenu popup = new PopupMenu(MainActivity.this, btnAddNote);
-                popup.getMenu().add("Nueva carpeta");
-                popup.getMenu().add("Nueva nota");
+                popup.getMenu().add(getText(R.string.new_folder));
+                popup.getMenu().add(getText(R.string.new_note));
 
                 popup.setOnMenuItemClickListener(itm -> {
-                    if (itm.getTitle().equals("Nueva carpeta")) {
+                    if (itm.getTitle().equals(getText(R.string.new_folder))) {
                         createNewFolderDialog();
                         return true;
                     }
-                    if (itm.getTitle().equals("Nueva nota")) {
+                    if (itm.getTitle().equals(getText(R.string.new_note))) {
                         // Crear nota nueva con ID null
                         Note newNote = new Note();
                         newNote.setId(null);
@@ -500,12 +500,12 @@ public class MainActivity extends AppCompatActivity {
     }
     private void createNewFolderDialog() {
         final EditText input = new EditText(this);
-        input.setHint("Nombre de la carpeta");
+        input.setHint(getText(R.string.note_title));
 
         new androidx.appcompat.app.AlertDialog.Builder(this)
-                .setTitle("Crear nueva carpeta")
+                .setTitle(getText(R.string.create_new_folder))
                 .setView(input)
-                .setPositiveButton("Crear", (dialog, which) -> {
+                .setPositiveButton(getText(R.string.guardar), (dialog, which) -> {
                     String folderName = input.getText().toString().trim();
 
                     if (folderName.isEmpty()) {
@@ -514,7 +514,7 @@ public class MainActivity extends AppCompatActivity {
 
                     createFolder(folderName);
                 })
-                .setNegativeButton("Cancelar", null)
+                .setNegativeButton(getText(R.string.cancelar), null)
                 .show();
     }
     private void createFolder(String folderName) {
@@ -597,46 +597,72 @@ public class MainActivity extends AppCompatActivity {
 
                 int total = subCount + noteCount;
 
-                String msg = "Esta carpeta contiene " + total + " elementos"
-                        + " (" + subCount + " carpetas, " + noteCount + " notas)."
-                        + "\n\nSe eliminarán TODOS los elementos dentro de ella."
-                        + "\n\n¿Seguro que quieres eliminarla?";
+                // Obtener idioma actual ("es" o "en")
+                String lang = LocaleHelper.getLanguage(this);
+
+                String title;
+                String msg;
+                String positiveText;
+                String negativeText;
+                String successText;
+
+                if (lang.equals("es")) {
+                    title = "Eliminar carpeta \"" + folder.getName() + "\"";
+                    msg = "Esta carpeta contiene " + total + " elementos"
+                            + " (" + subCount + " carpetas, " + noteCount + " notas)."
+                            + "\n\nSe eliminarán TODOS los elementos dentro de ella."
+                            + "\n\n¿Seguro que quieres eliminarla?";
+                    positiveText = "Eliminar";
+                    negativeText = "Cancelar";
+                    successText = "Carpeta eliminada correctamente";
+                } else { // inglés
+                    title = "Delete folder \"" + folder.getName() + "\"";
+                    msg = "This folder contains " + total + " items"
+                            + " (" + subCount + " folders, " + noteCount + " notes)."
+                            + "\n\nALL items inside will be deleted."
+                            + "\n\nAre you sure you want to delete it?";
+                    positiveText = "Delete";
+                    negativeText = "Cancel";
+                    successText = "Folder deleted successfully";
+                }
 
                 new androidx.appcompat.app.AlertDialog.Builder(this)
-                        .setTitle("Eliminar carpeta \"" + folder.getName() + "\"")
+                        .setTitle(title)
                         .setMessage(msg)
-                        .setPositiveButton("Eliminar", (d, w) -> {
+                        .setPositiveButton(positiveText, (d, w) -> {
 
                             foldersManager.deleteFolderRecursively(folder.getId(), () -> {
                                 runOnUiThread(() -> {
                                     loadFolderContent(currentFolder);
-                                    Toast.makeText(this, "Carpeta eliminada", Toast.LENGTH_SHORT).show();
+                                    Toast.makeText(this, successText, Toast.LENGTH_SHORT).show();
                                 });
                             });
 
                         })
-                        .setNegativeButton("Cancelar", null)
+                        .setNegativeButton(negativeText, null)
                         .show();
             });
+
         });
     }
 
     private void confirmDeleteNote(@NonNull Note note) {
-
+        String title = getString(R.string.eliminar_nombre, note.getTitle());
+        String message = getString(R.string.delete_note_message);
         new androidx.appcompat.app.AlertDialog.Builder(this)
-                .setTitle("Eliminar nota \"" + note.getTitle() + "\"")
-                .setMessage("¿Seguro que quieres eliminar esta nota?")
-                .setPositiveButton("Eliminar", (dialog, which) -> deleteNoteWithEvents(note))
-                .setNegativeButton("Cancelar", null)
+                .setTitle(title)
+                .setMessage(message)
+                .setPositiveButton(getText(R.string.eliminar), (dialog, which) -> deleteNoteWithEvents(note))
+                .setNegativeButton(getText(R.string.cancelar), null)
                 .show();
     }
 
     private void showProfileMenu(ImageButton anchor) {
         PopupMenu popup = new PopupMenu(this, anchor);
-        popup.getMenu().add("Cerrar sesión"); // Solo una opción por ahora
+        popup.getMenu().add(getText(R.string.logout)); // Solo una opción por ahora
 
         popup.setOnMenuItemClickListener(item -> {
-            if (item.getTitle().equals("Cerrar sesión")) {
+            if (item.getTitle().equals(getText(R.string.logout))) {
                 logout();
                 return true;
             }
@@ -671,13 +697,13 @@ public class MainActivity extends AppCompatActivity {
         input.setText(note.getTitle());
 
         new androidx.appcompat.app.AlertDialog.Builder(this)
-                .setTitle("Renombrar nota")
+                .setTitle(getText(R.string.rename))
                 .setView(input)
-                .setPositiveButton("Aceptar", (dialog, which) -> {
+                .setPositiveButton(getText(R.string.aceptar), (dialog, which) -> {
 
                     String newName = input.getText().toString().trim();
                     if (newName.isEmpty()) {
-                        Toast.makeText(this, "El nombre no puede estar vacío", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(this, getText(R.string.invalid_name), Toast.LENGTH_SHORT).show();
                         return;
                     }
 
@@ -687,9 +713,9 @@ public class MainActivity extends AppCompatActivity {
                     notesManager.updateNote(note);
 
                     loadFolderContent(currentFolder);
-                    Toast.makeText(this, "Nota renombrada", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, getText(R.string.note_created_check), Toast.LENGTH_SHORT).show();
                 })
-                .setNegativeButton("Cancelar", null)
+                .setNegativeButton(getText(R.string.cancelar), null)
                 .show();
     }
 
@@ -735,7 +761,7 @@ public class MainActivity extends AppCompatActivity {
                     ev.setId(doc.getId());
 
                     evManager.deleteEvent(ev, () ->
-                            Log.d("DELETE_NOTE", "Evento eliminado: " + ev.getId())
+                            Log.d("DELETE_NOTE", getText(R.string.event_deleted) + ev.getId())
                     );
                 }
             }

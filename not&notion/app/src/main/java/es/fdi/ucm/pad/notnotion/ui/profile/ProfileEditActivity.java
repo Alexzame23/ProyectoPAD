@@ -55,11 +55,21 @@ public class ProfileEditActivity extends AppCompatActivity {
         // UI
         imgProfilePhotoEdit = findViewById(R.id.imgProfilePhotoEdit);
         btnChangePhoto = findViewById(R.id.btnChangePhoto);
+
         btnSaveChanges = findViewById(R.id.btnSaveChanges);
+        btnSaveChanges.setText(getString(R.string.guardar_cambios));
+
         etName = findViewById(R.id.etName);
+        etName.setText(getString(R.string.name));
+
         etCurrentPassword = findViewById(R.id.etCurrentPassword);
+        etCurrentPassword.setText(getString(R.string.contrasena_actual));
+
         etNewPassword = findViewById(R.id.etNewPassword);
+        etNewPassword.setText(getString(R.string.nueva_contrasena));
+
         etRepeatPassword = findViewById(R.id.etRepeatPassword);
+        etRepeatPassword.setText(getString(R.string.repetir_contrasena));
 
         findViewById(R.id.btnBack).setOnClickListener(v -> finish());
 

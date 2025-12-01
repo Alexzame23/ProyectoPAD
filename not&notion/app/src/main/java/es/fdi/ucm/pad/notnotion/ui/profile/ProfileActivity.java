@@ -38,8 +38,9 @@ public class ProfileActivity extends AppCompatActivity {
         tvName          = findViewById(R.id.tvName);
         tvUid           = findViewById(R.id.tvUid);
         btnLogout       = findViewById(R.id.btnLogout);
+        btnLogout.setText(getString(R.string.logout));
         btnEditProfile  = findViewById(R.id.btnEditProfile);
-
+        btnEditProfile.setText(getString(R.string.editar_perfil));
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
 
         if (user == null) {

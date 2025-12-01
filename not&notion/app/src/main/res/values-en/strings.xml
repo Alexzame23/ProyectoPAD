@@ -12,7 +12,15 @@
     <string name="desc_add_button">Add element</string>
     <string name="new_user"> or New User</string>
     <string name="password">Password</string>
+    <string name="new_note">New note</string>
+    <string name="new_folder">New folder</string>
+    <string name="create_new_note">Create new note</string>
+    <string name="note_created_check">Note was created successfully</string>
     <string name="confirm_password">Confirm password</string>
+    <string name="create_new_folder">Create new folder</string>
+    <string name="event_deleted">Event erased</string>
+
+    event_deleted
     <string name="log_in">Log In</string>
     <string name="user">User</string>
     <string name="name">Username</string>
@@ -85,4 +93,15 @@
     <string name="nueva_contrasena">New password</string>
     <string name="repetir_contrasena">Repeat new password</string>
     <string name="guardar_cambios">Save changes</string>
+    <string name="folder_deleted_success">Folder was deleted successfully</string>
+    <string name="eliminar">Delete</string>
+    <string name="rename">Rename</string>
+    <string name="delete_note_message">Are you sure you want to delete this note?</string>
+    <string name="eliminar_nombre">Delete&quot;%1$s&quot;</string>
+    <string name="aceptar">Okay</string>
+    <string name="invalid_name">Name cannot be empty</string>
+
+
+
+
 </resources>

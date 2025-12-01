@@ -16,6 +16,13 @@
     <string name="log_in">Iniciar Sesion</string>
     <string name="or">o</string>
     <string name="user">Usuario</string>
+    <string name="create_new_note">Crear nueva nota</string>
+    <string name="note_created_check">Nota creada correctamente</string>
+    <string name="create_new_folder">Crear nueva carpeta</string>
+    <string name="event_deleted">Evento eliminado</string>
+
+    <string name="new_note">Nueva nota</string>
+    <string name="new_folder">Nueva carpeta</string>
     <string name="name">Nombre</string>
     <string name="email">Correo: %1$s</string>
     <string name="create_account">Crear cuenta</string>
@@ -84,5 +91,11 @@
     <string name="nueva_contrasena">Nueva contraseña</string>
     <string name="repetir_contrasena">Repite la nueva contraseña</string>
     <string name="guardar_cambios">Guardar cambios</string>
-
+    <string name="folder_deleted_success">Folder was deleted successfully</string>
+    <string name="eliminar">Delete</string>
+    <string name="rename">Cambiar nombre</string>
+    <string name="delete_note_message">¿Seguro que quieres eliminar esta nota?</string>
+    <string name="eliminar_nombre">Eliminar &quot;%1$s&quot;</string>
+    <string name="aceptar">Aceptar</string>
+    <string name="invalid_name">El nombre no puede estar vacio</string>
 </resources>
