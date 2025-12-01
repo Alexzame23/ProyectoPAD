@@ -132,7 +132,7 @@ public class EventEditActivity extends AppCompatActivity {
             selectedDateMillis = getIntent().getLongExtra("selectedDate", -1);
 
             if (selectedDateMillis == -1) {
-                Toast.makeText(this, "Error: No se recibió fecha", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, getText(R.string.no_date), Toast.LENGTH_SHORT).show();
                 finish();
                 return;
             }
@@ -165,9 +165,9 @@ public class EventEditActivity extends AppCompatActivity {
                 new ActivityResultContracts.RequestPermission(),
                 isGranted -> {
                     if (isGranted) {
-                        Toast.makeText(this, "Permiso de notificaciones concedido", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(this, getText(R.string.allow_notification), Toast.LENGTH_SHORT).show();
                     } else {
-                        Toast.makeText(this, "Permiso denegado. Las notificaciones no funcionarán", Toast.LENGTH_LONG).show();
+                        Toast.makeText(this, getText(R.string.no_allow_notification), Toast.LENGTH_LONG).show();
                     }
                 }
         );
@@ -233,17 +233,22 @@ public class EventEditActivity extends AppCompatActivity {
         }
 
         if (totalReminders > 0) {
-            String text = totalReminders + " recordatorio" + (totalReminders > 1 ? "s" : "") + " configurado" + (totalReminders > 1 ? "s" : "");
+            String reminderText = getString(R.string.reminder); // "recordatorio" o "reminder"
+            String text = String.format("%d %s%s configurado%s",
+                    totalReminders,
+                    reminderText,
+                    totalReminders > 1 ? "s" : "",
+                    totalReminders > 1 ? "s" : "");
 
             // Añadir indicador visual si hay alarma del momento
             if (tempNotifyAtEventTime) {
-                text += " (⏰ incluye alarma)";
+                text += " (⏰)";
             }
 
             tvNotificationStatus.setText(text);
             tvNotificationStatus.setTextColor(getResources().getColor(android.R.color.holo_green_dark));
         } else {
-            tvNotificationStatus.setText("Sin recordatorios");
+            tvNotificationStatus.setText(getText(R.string.no_reminder));
             tvNotificationStatus.setTextColor(getResources().getColor(android.R.color.darker_gray));
         }
     }
@@ -263,7 +268,7 @@ public class EventEditActivity extends AppCompatActivity {
                 startActivity(intent);
 
                 Toast.makeText(this,
-                        "Por favor, activa 'Mostrar a pantalla completa' para las alarmas",
+                        getText(R.string.full_window),
                         Toast.LENGTH_LONG).show();
             }
         }
@@ -329,7 +334,7 @@ public class EventEditActivity extends AppCompatActivity {
         String desc  = editDescription.getText().toString().trim();
 
         if (title.isEmpty()) {
-            Toast.makeText(this, "El título es obligatorio", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, getText(R.string.title_mandatory), Toast.LENGTH_SHORT).show();
             return;
         }
 
@@ -357,7 +362,7 @@ public class EventEditActivity extends AppCompatActivity {
                 // Programar todas las notificaciones (previas + momento)
                 NotificationScheduler.scheduleNotifications(this, newEvent);
 
-                Toast.makeText(this, "Evento creado correctamente", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, getText(R.string.event_created_success), Toast.LENGTH_SHORT).show();
                 finish();
             });
 
@@ -378,7 +383,7 @@ public class EventEditActivity extends AppCompatActivity {
             eventsManager.updateEvent(currentEvent, () -> {
                 NotificationScheduler.rescheduleNotifications(this, currentEvent);
 
-                Toast.makeText(this, "Evento actualizado", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, getText(R.string.event_created_success), Toast.LENGTH_SHORT).show();
                 finish();
             });
         }
@@ -394,7 +399,7 @@ public class EventEditActivity extends AppCompatActivity {
         NotificationScheduler.cancelNotifications(this, currentEvent);
 
         eventsManager.deleteEvent(currentEvent, () -> {
-            Toast.makeText(this, "Evento eliminado", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, getText(R.string.event_deleted), Toast.LENGTH_SHORT).show();
             finish();
         });
     }

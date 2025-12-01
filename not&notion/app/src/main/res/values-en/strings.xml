@@ -100,8 +100,16 @@
     <string name="eliminar_nombre">Delete&quot;%1$s&quot;</string>
     <string name="aceptar">Okay</string>
     <string name="invalid_name">Name cannot be empty</string>
-
-
+    <string name="empty_data">Incomplete data</string>
+    <string name="reminder">Reminder</string>
+    <string name="no_reminder">No Reminder</string>
+    <string name="full_window">Please activate "Show full window" for the alarms</string>
+    <string name="title_mandatory">Title is mandatory</string>
+    <string name="event_created_success">Event created succesfully</string>
+    <string name="no_date">No date received</string>
+    <string name="setNumber">Set a number</string>
+    <string name="allow_notification">Reminders allowed</string>
+    <string name="no_allow_notification">Reminders wont show</string>
 
 
 </resources>

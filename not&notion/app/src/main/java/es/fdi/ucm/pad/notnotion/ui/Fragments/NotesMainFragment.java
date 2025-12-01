@@ -105,9 +105,9 @@ public class NotesMainFragment extends Fragment {
 
             // Asignamos IDs explícitos a cada opción
             menu.getMenu().add(0, 0, 0, "Añadir a favoritos");
-            menu.getMenu().add(0, 1, 1, "Renombrar");
-            menu.getMenu().add(0, 2, 2, "Asociar a fecha");
-            menu.getMenu().add(0, 3, 3, "Eliminar");
+            menu.getMenu().add(0, 1, 1, getText(R.string.rename));
+            menu.getMenu().add(0, 2, 2, getText(R.string.anadir_evento));
+            menu.getMenu().add(0, 3, 3, getText(R.string.eliminar));
 
             menu.setOnMenuItemClickListener(item -> {
                 Log.d("DEBUG_MENU", "Click en opción: id=" + item.getItemId()
@@ -246,7 +246,7 @@ public class NotesMainFragment extends Fragment {
                 null                 // sin patrón de recurrencia
         );
 
-        Toast.makeText(getContext(), "Nota añadida al calendario", Toast.LENGTH_SHORT).show();
+        Toast.makeText(getContext(), getText(R.string.note_created_check), Toast.LENGTH_SHORT).show();
     }
 
 

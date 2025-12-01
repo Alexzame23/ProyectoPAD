@@ -98,4 +98,18 @@
     <string name="eliminar_nombre">Eliminar &quot;%1$s&quot;</string>
     <string name="aceptar">Aceptar</string>
     <string name="invalid_name">El nombre no puede estar vacio</string>
+    <string name="empty_data">Datos incompletos</string>
+    <string name="full_window">"Por favor, activa 'Mostrar a pantalla completa' para las alarmas"</string>
+    <string name="reminder">Recordatorio</string>
+    <string name="no_reminder">Sin recordatorio</string>
+    <string name="event_created_success">Evento creado correctamente</string>
+    <string name="allow_notification">Notificaciones permitidas</string>
+    <string name="setNumber">Introduce una cantidad</string>
+    <string name="no_allow_notification">Permiso denegado. Las notificaciones no se mostrarán.</string>
+    <string name="no_date">Fecha no recibida</string>setNumber
+
+
+    <string name="title_mandatory">El titulo es obligatorio</string>
+
+
 </resources>

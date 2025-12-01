@@ -131,7 +131,7 @@ public class EditNoteActivity extends AppCompatActivity {
         }
 
         // ---- CASO 3: no hay info ----
-        Toast.makeText(this, "Error: datos incompletos", Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, getText(R.string.empty_data), Toast.LENGTH_SHORT).show();
         finish();
     }
 
