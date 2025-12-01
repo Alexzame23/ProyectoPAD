@@ -21,6 +21,7 @@ import android.widget.ImageButton;
 import android.widget.PopupMenu;
 import android.widget.Toast;
 
+import com.google.android.material.navigation.NavigationBarView;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.firebase.Timestamp;
 import com.google.firebase.auth.FirebaseUser;
@@ -38,7 +39,6 @@ import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.firebase.auth.FirebaseAuth;
 import com.firebase.ui.auth.AuthUI;
 
@@ -90,33 +90,6 @@ public class MainActivity extends AppCompatActivity {
 
         boolean isLandscape = getResources().getBoolean(R.bool.isLandscape);
 
-        if (isLandscape) {
-            ImageButton btnNotes = findViewById(R.id.btnNotes);
-            ImageButton btnCalendar = findViewById(R.id.btnCalendar);
-            ImageButton btnPerfil = findViewById(R.id.btnPerfil);
-
-            if (btnNotes != null) {
-                btnNotes.setOnClickListener(v -> {
-                    volverAlExploradorConUI();
-                });
-            }
-
-            if (btnCalendar != null) {
-                btnCalendar.setOnClickListener(v -> {
-                    getSupportFragmentManager()
-                            .beginTransaction()
-                            .replace(R.id.contentContainer, new CalendarFragment())
-                            .commit();
-                });
-            }
-
-            if (btnPerfil != null) {
-                btnPerfil.setOnClickListener(v -> {
-                    startActivity(new Intent(MainActivity.this, ProfileActivity.class));
-                });
-            }
-        }
-
 
         FrameLayout contentContainer = findViewById(R.id.contentContainer);
 
@@ -127,49 +100,49 @@ public class MainActivity extends AppCompatActivity {
         foldersManager   = new FoldersManager();
         notesManager = new NotesManager();
 
-        if (contentContainer != null) {
-            getLayoutInflater().inflate(R.layout.notes_main, contentContainer, true);
-            busquedaBarra = contentContainer.findViewById(R.id.busquedaBarra);
+        // SIEMPRE existe contentContainer en ambos layouts → inflamos notes_main aquí
+        getLayoutInflater().inflate(R.layout.notes_main, contentContainer, true);
 
-            ViewCompat.setOnApplyWindowInsetsListener(contentContainer, (v, insets) -> {
-                Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-                v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
-                return WindowInsetsCompat.CONSUMED;
-            });
+        busquedaBarra = contentContainer.findViewById(R.id.busquedaBarra);
 
-            // --- Inicializar componentes ---
-            recyclerFolders = contentContainer.findViewById(R.id.recyclerFolders);
-            recyclerNotes = contentContainer.findViewById(R.id.recyclerNotes);
+        ViewCompat.setOnApplyWindowInsetsListener(contentContainer, (v, insets) -> {
+            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
+            return WindowInsetsCompat.CONSUMED;
+        });
 
-            foldersAdapter = new FoldersAdapter();
-            notesAdapter   = new NotesAdapter();
-            notesAdapter.setOnNoteClickListener(note -> { mostrarPantallaEdicion(note); });
+// --- Inicializar componentes ---
+        recyclerFolders = contentContainer.findViewById(R.id.recyclerFolders);
+        recyclerNotes = contentContainer.findViewById(R.id.recyclerNotes);
 
-            recyclerFolders.setLayoutManager(new GridLayoutManager(this, 3));
-            recyclerNotes.setLayoutManager(new GridLayoutManager(this, 3));
+        foldersAdapter = new FoldersAdapter();
+        notesAdapter = new NotesAdapter();
+        notesAdapter.setOnNoteClickListener(note -> mostrarPantallaEdicion(note));
 
-            recyclerFolders.setAdapter(foldersAdapter);
-            recyclerNotes.setAdapter(notesAdapter);
+        recyclerFolders.setLayoutManager(new GridLayoutManager(this, 3));
+        recyclerNotes.setLayoutManager(new GridLayoutManager(this, 3));
 
-            ImageButton btnGoBack = contentContainer.findViewById(R.id.btnGoBack);
-            if (btnGoBack != null) {
-                btnGoBack.setOnClickListener(v -> goBack());
-            }
-            ImageButton btnAddNote = contentContainer.findViewById(R.id.btnAddNote);
+        recyclerFolders.setAdapter(foldersAdapter);
+        recyclerNotes.setAdapter(notesAdapter);
 
+// Botón atrás
+        ImageButton btnGoBack = contentContainer.findViewById(R.id.btnGoBack);
+        if (btnGoBack != null) btnGoBack.setOnClickListener(v -> goBack());
+
+// Botón añadir nota/carpeta
+        ImageButton btnAddNote = contentContainer.findViewById(R.id.btnAddNote);
+        if (btnAddNote != null) {
             btnAddNote.setOnClickListener(v -> {
                 PopupMenu popup = new PopupMenu(MainActivity.this, btnAddNote);
                 popup.getMenu().add("Nueva carpeta");
                 popup.getMenu().add("Nueva nota");
 
                 popup.setOnMenuItemClickListener(itm -> {
-                    String title = itm.getTitle().toString();
-
-                    if (title.equals("Nueva carpeta")) {
+                    if (itm.getTitle().equals("Nueva carpeta")) {
                         createNewFolderDialog();
                         return true;
                     }
-                    if (title.equals("Nueva nota")) {
+                    if (itm.getTitle().equals("Nueva nota")) {
                         createNewNoteDialog();
                         return true;
                     }
@@ -178,74 +151,43 @@ public class MainActivity extends AppCompatActivity {
 
                 popup.show();
             });
-            // --- Perfil ---
+        }
+
+// --- PERFIL SOLO EN PORTRAIT ---
+
             ImageButton btnPerfil = findViewById(R.id.btnPerfil);
             FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
 
             if (user != null) {
+                firestoreManager.getCurrentUserData(userData -> currentUser = userData);
 
-                // Cargar datos del usuario desde Firestore
-                firestoreManager.getCurrentUserData(userData -> {
-                    currentUser = userData;
-
-                    Log.d("MainActivity", "Usuario Firestore cargado:");
-                    Log.d("MainActivity", "Email: " + currentUser.getEmail());
-                    Log.d("MainActivity", "Username: " + currentUser.getUsername());
-                    Log.d("MainActivity", "Preferencias: " + currentUser.getPreferences());
-                });
-
-                // PERFIL → cargar foto desde helper
                 UserProfileHelper profileHelper = new UserProfileHelper();
                 profileHelper.loadUserPhotoInto(btnPerfil);
 
-                // Ir al perfil al pulsar
-                btnPerfil.setOnClickListener(v -> {
-                    startActivity(new Intent(MainActivity.this, ProfileActivity.class));
-                });
+                btnPerfil.setOnClickListener(v ->
+                        startActivity(new Intent(MainActivity.this, ProfileActivity.class)));
 
             } else {
-
-                // No hay usuario → a Login
                 btnPerfil.setOnClickListener(v -> {
                     startActivity(new Intent(MainActivity.this, LoginActivity.class));
                     finish();
                 });
             }
 
-            currentFolder = new Folder("root", "Root", "None", null, null, 0);
-            loadFolderContent(currentFolder);
-            foldersAdapter.setOnFolderClickListener(folder -> {
-                navigationStack.add(currentFolder);
-                loadFolderContent(folder);
-            });
-        }
 
-        BottomNavigationView bottomNavigation = findViewById(R.id.bottomNavigation);
+// Carpeta raíz
+        currentFolder = new Folder("root", "Root", "None", null, null, 0);
+        loadFolderContent(currentFolder);
 
-        if (bottomNavigation != null) {
-            bottomNavigation.setOnItemSelectedListener(item -> {
+        foldersAdapter.setOnFolderClickListener(folder -> {
+            navigationStack.add(currentFolder);
+            loadFolderContent(folder);
+        });
 
-                int id = item.getItemId();
-                contentContainer.removeAllViews();
 
-                // -------- TAB NOTAS --------
-                if (id == R.id.nav_notes) {
-                    volverAlExploradorConUI();
 
-                }
 
-                else if (id == R.id.nav_calendar) {
-                    getLayoutInflater().inflate(R.layout.calendar_main, contentContainer, true);
 
-                    getSupportFragmentManager()
-                            .beginTransaction()
-                            .replace(R.id.contentContainer, new CalendarFragment())
-                            .commit();
-                }
-
-                return true;
-            });
-        }
         foldersAdapter.setOnFolderLongClickListener((folder, view) -> {
             PopupMenu popup = new PopupMenu(MainActivity.this, view);
             popup.getMenu().add(0, 0, 0, "Renombrar");
@@ -292,6 +234,25 @@ public class MainActivity extends AppCompatActivity {
             popup.show();
         });
 
+        NavigationBarView bottomNavigation = findViewById(R.id.bottomNavigation);
+
+        bottomNavigation.setOnItemSelectedListener(item -> {
+
+            contentContainer.removeAllViews();
+
+            if (item.getItemId() == R.id.nav_notes) {
+                volverAlExploradorConUI();
+            }
+            else if (item.getItemId() == R.id.nav_calendar) {
+                getLayoutInflater().inflate(R.layout.calendar_main, contentContainer, true);
+                getSupportFragmentManager()
+                        .beginTransaction()
+                        .replace(R.id.contentContainer, new CalendarFragment())
+                        .commit();
+            }
+
+            return true;
+        });
 
     }
 
