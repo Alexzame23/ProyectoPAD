@@ -53,8 +53,7 @@ public class ProfileActivity extends AppCompatActivity {
         profileHelper = new UserProfileHelper();
 
         // --- Cargar email + UID (solo vienen de Auth) ---
-        tvEmail.setText("Correo: " + user.getEmail());
-        tvUid.setText("UID: " + user.getUid());
+        tvEmail.setText(getString(R.string.email, user.getEmail()));
 
         // --- Cargar nombre + foto desde Firestore (fallback a Auth) ---
         profileHelper.applyToViews(tvName, imgProfilePhoto);
