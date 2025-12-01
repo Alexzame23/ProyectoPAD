@@ -50,13 +50,16 @@ public class FirebaseAuthManager {
     public void handleSignInResult(int resultCode, Intent data,
                                    @NonNull Runnable onSuccess,
                                    @NonNull java.util.function.Consumer<String> onError) {
+
         IdpResponse response = IdpResponse.fromResultIntent(data);
+
         if (resultCode == Activity.RESULT_OK) {
             onSuccess.run();
         } else {
             String errorMessage = (response != null && response.getError() != null)
                     ? response.getError().getMessage()
                     : "Login cancelado o fallido";
+
             onError.accept(errorMessage);
         }
     }

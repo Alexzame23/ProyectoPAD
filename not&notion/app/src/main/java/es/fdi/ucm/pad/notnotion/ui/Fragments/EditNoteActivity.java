@@ -1,16 +1,13 @@
 package es.fdi.ucm.pad.notnotion.ui.Fragments;
 
 import android.app.AlertDialog;
-import android.content.ActivityNotFoundException;
 import android.content.ContentResolver;
-import android.content.ContentUris;
 import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.provider.OpenableColumns;
-import android.util.Log;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.FrameLayout;
@@ -36,53 +33,38 @@ import java.util.ArrayList;
 import java.util.UUID;
 
 import es.fdi.ucm.pad.notnotion.R;
-import es.fdi.ucm.pad.notnotion.data.firebase.NotesManager;
 import es.fdi.ucm.pad.notnotion.data.model.ContentBlock;
 import es.fdi.ucm.pad.notnotion.data.model.Note;
 import es.fdi.ucm.pad.notnotion.ui.views.TextEditorView;
 import es.fdi.ucm.pad.notnotion.utils.ImageHelper;
 
-// Activity encargada de editar notas comunicandose con MainActivity
-
 public class EditNoteActivity extends AppCompatActivity {
 
-    private static final String TAG = "EditNoteActivity";
-
-    // Constantes para los extras del Intent
     public static final String EXTRA_NOTE = "extra_note";
     public static final String EXTRA_FOLDER_ID = "extra_folder_id";
 
-    // Componentes de la interfaz
     private EditText etTitle;
     private FrameLayout coverContainer;
     private ImageView coverImage;
     private TextView btnAddCover;
     private TextEditorView textEditor;
 
-    // Botones de formato
     private TextView btnBold;
     private TextView btnItalic;
     private FrameLayout btnUnderline;
     private TextView btnTextSize;
 
-    // Botones de navegación
     private FloatingActionButton btnBack;
     private FloatingActionButton btnAddContent;
 
-    // Datos de la nota
     private Note note;
     private String folderId;
 
-    // Estado de los botones de formato
     private boolean isBoldActive = false;
     private boolean isItalicActive = false;
     private boolean isUnderlineActive = false;
 
-    // Firebase
     private FirebaseFirestore db;
-    private NotesManager notesManager;
-
-    // Lanzadores de actividad para seleccionar archivos
     private ActivityResultLauncher<Intent> pickCoverLauncher;
     private ActivityResultLauncher<Intent> pickContentImageLauncher;
     private ActivityResultLauncher<Intent> pickDocumentLauncher;
@@ -92,249 +74,145 @@ public class EditNoteActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.edit_note);
 
-        Log.d(TAG, "EditNoteActivity iniciada");
-
-        // Inicializar Firebase
         db = FirebaseFirestore.getInstance();
-        notesManager = new NotesManager();
 
-        // Inicializar vistas SIEMPRE antes de cargar datos
         initializeViews();
         setupActivityLaunchers();
         setupListeners();
 
         Intent intent = getIntent();
-
-        // ---- CASO 1: viene de MainActivity (nota completa) ----
         note = (Note) intent.getSerializableExtra(EXTRA_NOTE);
         folderId = intent.getStringExtra(EXTRA_FOLDER_ID);
 
         if (note != null && folderId != null) {
-            Log.d(TAG, "Nota recibida desde MainActivity");
             loadNoteData();
             return;
         }
 
-        // ---- CASO 2: viene desde el calendario ----
         String noteId = intent.getStringExtra("noteId");
         if (noteId != null) {
-            Log.d(TAG, "Abriendo nota desde calendario: " + noteId);
-            loadNoteFromFirestore(noteId); // <-- carga asíncrona
-            return; // NO cerrar la activity
+            loadNoteFromFirestore(noteId);
+            return;
         }
 
-        // ---- CASO 3: no hay info ----
         Toast.makeText(this, "Error: datos incompletos", Toast.LENGTH_SHORT).show();
         finish();
     }
 
-
-
-    // Carga los datos que MainActivity nos pasó mediante el Intent.
-    private boolean loadIntentData() {
-
-        Intent intent = getIntent();
-
-        // Opción 1: venimos desde MainActivity (nota completa)
-        note = (Note) intent.getSerializableExtra(EXTRA_NOTE);
-        folderId = intent.getStringExtra(EXTRA_FOLDER_ID);
-
-        if (note != null && folderId != null) {
-            Log.d(TAG, "Nota recibida completa desde MainActivity");
-            return true;
-        }
-
-        // Opción 2: venimos desde el calendario
-        String noteId = intent.getStringExtra("noteId");
-        if (noteId != null) {
-            Log.d(TAG, "Nota recibida desde calendario con noteId=" + noteId);
-            loadNoteFromFirestore(noteId);  // <-- AQUÍ CARGAS LA NOTA
-            return false;
-        }
-
-        Log.e(TAG, "No se recibió ni nota ni noteId");
-        return false;
-    }
-
-
-
-    // Inicializa todas las referencias a las vistas del layout.
     private void initializeViews() {
-        // Componentes principales
         etTitle = findViewById(R.id.etTitle);
         coverContainer = findViewById(R.id.coverContainer);
         coverImage = findViewById(R.id.coverImage);
         btnAddCover = findViewById(R.id.btnAddCover);
         textEditor = findViewById(R.id.richEditor);
 
-        // Botones de formato
         btnBold = findViewById(R.id.btnBold);
         btnItalic = findViewById(R.id.btnItalic);
         btnUnderline = findViewById(R.id.btnUnderline);
         btnTextSize = findViewById(R.id.btnTextSize);
 
-        // Botones de navegación
         btnBack = findViewById(R.id.btnBack);
         btnAddContent = findViewById(R.id.btnAddContent);
     }
 
-
-    // Configura los lanzadores para seleccionar archivos
     private void setupActivityLaunchers() {
-        // Lanzador para seleccionar imagen de PORTADA
         pickCoverLauncher = registerForActivityResult(
                 new ActivityResultContracts.StartActivityForResult(),
                 result -> {
                     if (result.getResultCode() == RESULT_OK && result.getData() != null) {
                         Uri selectedUri = result.getData().getData();
-
-                        Log.d(TAG, "PORTADA: Imagen seleccionada");
-                        Log.d(TAG, "URI: " + selectedUri);
-
-                        // Convertir a Base64
                         String base64Image = ImageHelper.convertImageToBase64(this, selectedUri);
 
                         if (base64Image != null) {
-                            // Guardar el Base64 en la nota
                             note.setCoverImageUrl(base64Image);
-
-                            // Mostrar la imagen inmediatamente en la interfaz
                             coverImage.setVisibility(View.VISIBLE);
                             btnAddCover.setVisibility(View.GONE);
 
-                            // Convertir Base64 a Bitmap para mostrar
                             Bitmap bitmap = ImageHelper.convertBase64ToBitmap(base64Image);
-                            if (bitmap != null) {
-                                coverImage.setImageBitmap(bitmap);
-                                Log.d(TAG, "Portada cargada exitosamente");
-                            }
+                            if (bitmap != null) coverImage.setImageBitmap(bitmap);
                         } else {
-                            Toast.makeText(this, "Error al procesar la imagen",
-                                    Toast.LENGTH_SHORT).show();
-                            Log.e(TAG, "Error al convertir imagen a Base64");
+                            Toast.makeText(this, "Error al procesar imagen", Toast.LENGTH_SHORT).show();
                         }
                     }
                 }
         );
 
-        // Lanzador para añadir imágenes al CONTENIDO
         pickContentImageLauncher = registerForActivityResult(
                 new ActivityResultContracts.StartActivityForResult(),
                 result -> {
                     if (result.getResultCode() == RESULT_OK && result.getData() != null) {
                         Uri selectedUri = result.getData().getData();
-
-                        Log.d(TAG, "CONTENIDO: Imagen seleccionada");
-                        Log.d(TAG, "URI: " + selectedUri);
-
-                        // Mostrar diálogo de progreso
-                        Toast.makeText(this, "Procesando imagen...", Toast.LENGTH_SHORT).show();
-
-                        // Convertir a Base64
                         String base64Image = ImageHelper.convertImageToBase64(this, selectedUri);
 
                         if (base64Image != null) {
-                            // Añadir al editor
                             textEditor.addImageBlock(base64Image);
-                            Toast.makeText(this, "Imagen añadida", Toast.LENGTH_SHORT).show();
-                            Log.d(TAG, "Imagen añadida al contenido");
                         } else {
-                            Toast.makeText(this, "Error al procesar la imagen",
-                                    Toast.LENGTH_SHORT).show();
-                            Log.e(TAG, "Error al convertir imagen a Base64");
+                            Toast.makeText(this, "Error al procesar imagen", Toast.LENGTH_SHORT).show();
                         }
                     }
                 }
         );
 
-        // Lanzador para añadir documentos al contenido
         pickDocumentLauncher = registerForActivityResult(
                 new ActivityResultContracts.StartActivityForResult(),
                 result -> {
                     if (result.getResultCode() == RESULT_OK && result.getData() != null) {
                         Uri documentUri = result.getData().getData();
-                        Log.d(TAG, "Documento seleccionado: " + documentUri);
                         handleDocumentSelected(documentUri);
                     }
                 }
         );
     }
 
-    // Carga los datos de la nota en la interfaz
     private void loadNoteData() {
-        // Cargar título
-        if (note.getTitle() != null) {
-            etTitle.setText(note.getTitle());
-        }
+        if (note.getTitle() != null) etTitle.setText(note.getTitle());
 
-        // Cargar imagen de portada si existe
         if (note.getCoverImageUrl() != null && !note.getCoverImageUrl().isEmpty()) {
             coverImage.setVisibility(View.VISIBLE);
             btnAddCover.setVisibility(View.GONE);
 
-            // Convertir Base64 a Bitmap
             Bitmap bitmap = ImageHelper.convertBase64ToBitmap(note.getCoverImageUrl());
-            if (bitmap != null) {
-                coverImage.setImageBitmap(bitmap);
-                Log.d(TAG, "✓ Portada cargada desde Base64");
-            } else {
-                Log.e(TAG, "✗ Error al decodificar portada");
-            }
+            if (bitmap != null) coverImage.setImageBitmap(bitmap);
         }
 
-        // Cargar contenido en el editor
-        if (note.getContentBlocks() != null && !note.getContentBlocks().isEmpty()) {
+        if (note.getContentBlocks() != null) {
             textEditor.loadContent(note.getContentBlocks());
         } else {
             textEditor.loadContent(new ArrayList<>());
         }
     }
 
-    // Configura todos los listeners de los botones.
     private void setupListeners() {
-
-        // IMAGEN DE PORTADA
         coverContainer.setOnClickListener(v -> {
             Intent intent = new Intent(Intent.ACTION_PICK,
                     MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
             pickCoverLauncher.launch(intent);
         });
 
-        // Botones de estilos
         btnBold.setOnClickListener(v -> {
             isBoldActive = !isBoldActive;
             updateButtonState(btnBold, isBoldActive);
             updateTextStyle();
-            Log.d(TAG, "Bold toggled: " + isBoldActive);
         });
 
         btnItalic.setOnClickListener(v -> {
             isItalicActive = !isItalicActive;
             updateButtonState(btnItalic, isItalicActive);
             updateTextStyle();
-            Log.d(TAG, "Italic toggled: " + isItalicActive);
         });
 
         btnUnderline.setOnClickListener(v -> {
             isUnderlineActive = !isUnderlineActive;
-
-            if (isUnderlineActive) {
-                btnUnderline.setBackgroundColor(getResources().getColor(R.color.light_yellow));
-            } else {
-                btnUnderline.setBackgroundColor(getResources().getColor(android.R.color.transparent));
-            }
-
+            updateButtonStateUnderline();
             updateTextStyle();
-            Log.d(TAG, "Underline toggled: " + isUnderlineActive);
         });
 
         btnTextSize.setOnClickListener(v -> showTextSizeDialog());
 
-        // Boton para añadir contenido
         btnAddContent.setOnClickListener(v -> {
             PopupMenu popup = new PopupMenu(this, btnAddContent);
             popup.getMenu().add(0, 1, 0, "Añadir imagen");
-            popup.getMenu().add(0, 2, 1, "Añadir documento"); // nueva opción
+            popup.getMenu().add(0, 2, 1, "Añadir documento");
 
             popup.setOnMenuItemClickListener(item -> {
                 if (item.getItemId() == 1) {
@@ -352,11 +230,9 @@ public class EditNoteActivity extends AppCompatActivity {
             popup.show();
         });
 
-        // Boton volver
         btnBack.setOnClickListener(v -> saveNoteAndFinish());
     }
 
-    // Abre el selector de documentos (PDF, Word, etc.)
     private void openDocumentPicker() {
         Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
         intent.setType("*/*");
@@ -371,56 +247,43 @@ public class EditNoteActivity extends AppCompatActivity {
         pickDocumentLauncher.launch(intent);
     }
 
-    // Maneja el documento seleccionado: persiste permisos, obtiene nombre y tipo, e inserta el bloque interactivo
     private void handleDocumentSelected(Uri uri) {
         if (uri == null) return;
 
         try {
-            // Persistir permiso de lectura para poder abrirlo más tarde
-            final int takeFlags = Intent.FLAG_GRANT_READ_URI_PERMISSION;
+            int takeFlags = Intent.FLAG_GRANT_READ_URI_PERMISSION;
             try {
                 getContentResolver().takePersistableUriPermission(uri, takeFlags);
-            } catch (SecurityException se) {
-                Log.w(TAG, "No se pudo tomar permiso persistente: " + se.getMessage());
-            }
+            } catch (SecurityException ignored) {}
 
             String name = getFileName(uri);
             String mimeType = getContentResolver().getType(uri);
-            if (mimeType == null) {
-                mimeType = "*/*";
-            }
+            if (mimeType == null) mimeType = "*/*";
 
-            // Insertar bloque interactivo en el editor (pasamos nombre, uri y mimeType)
             textEditor.addDocumentBlock(name, uri.toString(), mimeType);
             Toast.makeText(this, "Documento añadido", Toast.LENGTH_SHORT).show();
-            Log.d(TAG, "Documento añadido al editor: " + uri + " mime=" + mimeType);
 
         } catch (Exception e) {
-            Log.e(TAG, "Error al procesar documento seleccionado", e);
-            Toast.makeText(this, "Error al añadir documento: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Error al añadir documento", Toast.LENGTH_SHORT).show();
         }
     }
 
-    // Obtiene el nombre para mostrar del archivo referenciado por la Uri
     private String getFileName(Uri uri) {
         String result = null;
         Cursor cursor = null;
+
         try {
             cursor = getContentResolver().query(uri, null, null, null, null);
             if (cursor != null && cursor.moveToFirst()) {
                 int idx = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME);
-                if (idx >= 0) {
-                    result = cursor.getString(idx);
-                }
+                if (idx >= 0) result = cursor.getString(idx);
             }
-        } catch (Exception e) {
-            Log.w(TAG, "No se pudo obtener nombre archivo: " + e.getMessage());
+        } catch (Exception ignored) {
         } finally {
             if (cursor != null) cursor.close();
         }
 
         if (result == null) {
-            // Fallback: último segmento de la ruta
             String path = uri.getLastPathSegment();
             if (path != null) {
                 int slash = path.lastIndexOf('/');
@@ -429,10 +292,10 @@ public class EditNoteActivity extends AppCompatActivity {
                 result = "documento";
             }
         }
+
         return result;
     }
 
-    // Actualiza el estilo del texto según los botones activos
     private void updateTextStyle() {
         int style = ContentBlock.STYLE_NORMAL;
 
@@ -455,16 +318,16 @@ public class EditNoteActivity extends AppCompatActivity {
         textEditor.setCurrentTextStyle(style);
     }
 
-    // Actualiza visualmente el estado de un botón de formato
     private void updateButtonState(TextView button, boolean active) {
-        if (active) {
-            button.setBackgroundColor(getResources().getColor(R.color.light_yellow));
-        } else {
-            button.setBackgroundColor(getResources().getColor(android.R.color.transparent));
-        }
+        button.setBackgroundColor(getResources().getColor(
+                active ? R.color.light_yellow : android.R.color.transparent));
     }
 
-    // Muestra un diálogo para seleccionar el tamaño del texto
+    private void updateButtonStateUnderline() {
+        btnUnderline.setBackgroundColor(getResources().getColor(
+                isUnderlineActive ? R.color.light_yellow : android.R.color.transparent));
+    }
+
     private void showTextSizeDialog() {
         String[] sizes = {"12sp", "14sp", "16sp", "18sp", "20sp", "24sp", "28sp", "32sp"};
         int[] sizeValues = {12, 14, 16, 18, 20, 24, 28, 32};
@@ -474,15 +337,11 @@ public class EditNoteActivity extends AppCompatActivity {
                 .setItems(sizes, (dialog, which) -> {
                     textEditor.setCurrentTextSize(sizeValues[which]);
                     btnTextSize.setText(sizes[which]);
-                    Log.d(TAG, "Tamaño de texto cambiado a: " + sizes[which]);
                 })
                 .show();
     }
 
-    // Guarda la nota y cierra la Activity
     private void saveNoteAndFinish() {
-        Log.d(TAG, "Iniciando guardado de nota");
-
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
         if (user == null) {
             Toast.makeText(this, "Error: usuario no logueado", Toast.LENGTH_SHORT).show();
@@ -505,17 +364,13 @@ public class EditNoteActivity extends AppCompatActivity {
         saveToFirestore(user.getUid());
     }
 
-
     private void loadNoteFromFirestore(String noteId) {
-
         FirebaseFirestore db = FirebaseFirestore.getInstance();
 
         db.collectionGroup("notes")
                 .get()
                 .addOnSuccessListener(query -> {
-
                     for (QueryDocumentSnapshot doc : query) {
-
                         if (!doc.getId().equals(noteId)) continue;
 
                         note = doc.toObject(Note.class);
@@ -524,10 +379,7 @@ public class EditNoteActivity extends AppCompatActivity {
                         String[] parts = doc.getReference().getPath().split("/");
                         folderId = parts[3];
 
-                        Log.d(TAG, "Nota cargada: " + note.getTitle());
-                        Log.d(TAG, "FolderId: " + folderId);
-
-                        loadNoteData();  // <-- ahora sí, UI lista
+                        loadNoteData();
                         return;
                     }
 
@@ -540,13 +392,10 @@ public class EditNoteActivity extends AppCompatActivity {
                 });
     }
 
-    // Guarda la nota en Firestore.
     private void saveToFirestore(String userId) {
         String noteId = note.getId();
 
         if (noteId == null || noteId.isEmpty()) {
-            Log.d(TAG, "Creando nueva nota");
-
             String newNoteId = UUID.randomUUID().toString();
             note.setId(newNoteId);
             note.setCreatedAt(Timestamp.now());
@@ -559,19 +408,13 @@ public class EditNoteActivity extends AppCompatActivity {
                     .document(newNoteId)
                     .set(note)
                     .addOnSuccessListener(aVoid -> {
-                        Log.d(TAG, "Nota creada exitosamente: " + note.getId());
                         Toast.makeText(this, "Nota creada", Toast.LENGTH_SHORT).show();
                         finish();
                     })
-                    .addOnFailureListener(e -> {
-                        Log.e(TAG, "Error al crear nota", e);
-                        Toast.makeText(this, "Error al crear nota: " + e.getMessage(),
-                                Toast.LENGTH_SHORT).show();
-                    });
+                    .addOnFailureListener(e ->
+                            Toast.makeText(this, "Error al crear nota", Toast.LENGTH_SHORT).show());
 
         } else {
-            Log.d(TAG, "Actualizando nota existente: " + noteId);
-
             db.collection("users")
                     .document(userId)
                     .collection("folders")
@@ -580,15 +423,11 @@ public class EditNoteActivity extends AppCompatActivity {
                     .document(noteId)
                     .set(note, SetOptions.merge())
                     .addOnSuccessListener(aVoid -> {
-                        Log.d(TAG, "Nota actualizada exitosamente");
                         Toast.makeText(this, "Nota guardada", Toast.LENGTH_SHORT).show();
                         finish();
                     })
-                    .addOnFailureListener(e -> {
-                        Log.e(TAG, "Error al guardar nota", e);
-                        Toast.makeText(this, "Error al guardar: " + e.getMessage(),
-                                Toast.LENGTH_SHORT).show();
-                    });
+                    .addOnFailureListener(e ->
+                            Toast.makeText(this, "Error al guardar nota", Toast.LENGTH_SHORT).show());
         }
     }
 }

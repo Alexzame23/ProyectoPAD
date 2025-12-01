@@ -15,16 +15,13 @@ import androidx.annotation.NonNull;
 import es.fdi.ucm.pad.notnotion.R;
 import es.fdi.ucm.pad.notnotion.data.model.Notification;
 
-/**
- * Diálogo para añadir una notificación personalizada
- */
 public class AddNotificationDialog extends Dialog {
 
     private EditText editQuantity;
     private Spinner spinnerTimeUnit;
     private Button btnAdd, btnCancel;
 
-    private OnNotificationAddedListener listener;
+    private final OnNotificationAddedListener listener;
 
     public interface OnNotificationAddedListener {
         void onNotificationAdded(Notification item);
@@ -54,7 +51,6 @@ public class AddNotificationDialog extends Dialog {
     }
 
     private void setupSpinner() {
-        // Crear array de opciones
         String[] timeUnits = new String[]{
                 Notification.TimeUnit.MINUTES.getDisplayName(),
                 Notification.TimeUnit.HOURS.getDisplayName(),
@@ -67,10 +63,9 @@ public class AddNotificationDialog extends Dialog {
                 android.R.layout.simple_spinner_item,
                 timeUnits
         );
+
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinnerTimeUnit.setAdapter(adapter);
-
-        // Por defecto: Minutos
         spinnerTimeUnit.setSelection(0);
     }
 
@@ -81,7 +76,6 @@ public class AddNotificationDialog extends Dialog {
 
     private void addNotification() {
         String quantityStr = editQuantity.getText().toString().trim();
-
         if (quantityStr.isEmpty()) {
             Toast.makeText(getContext(), "Introduce una cantidad", Toast.LENGTH_SHORT).show();
             return;
@@ -99,45 +93,24 @@ public class AddNotificationDialog extends Dialog {
             return;
         }
 
-        // Validar límites razonables
-        Notification.TimeUnit selectedUnit = getSelectedTimeUnit();
+        Notification.TimeUnit unit = getSelectedTimeUnit();
 
-        if (selectedUnit == Notification.TimeUnit.MINUTES && quantity > 10080) {
-            // Más de una semana en minutos
-            Toast.makeText(getContext(), "Cantidad demasiado grande, usa una unidad mayor", Toast.LENGTH_SHORT).show();
+        if (unit == Notification.TimeUnit.MINUTES && quantity > 10080 ||
+                unit == Notification.TimeUnit.HOURS && quantity > 168 ||
+                unit == Notification.TimeUnit.DAYS && quantity > 365 ||
+                unit == Notification.TimeUnit.WEEKS && quantity > 52) {
+            Toast.makeText(getContext(), "Cantidad demasiado grande", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        if (selectedUnit == Notification.TimeUnit.HOURS && quantity > 168) {
-            // Más de una semana en horas
-            Toast.makeText(getContext(), "Cantidad demasiado grande, usa días o semanas", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        if (selectedUnit == Notification.TimeUnit.DAYS && quantity > 365) {
-            Toast.makeText(getContext(), "Máximo 365 días", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        if (selectedUnit == Notification.TimeUnit.WEEKS && quantity > 52) {
-            Toast.makeText(getContext(), "Máximo 52 semanas", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        Notification item = new Notification(quantity, selectedUnit);
-
-        if (listener != null) {
-            listener.onNotificationAdded(item);
-        }
+        Notification item = new Notification(quantity, unit);
+        if (listener != null) listener.onNotificationAdded(item);
 
         dismiss();
     }
 
     private Notification.TimeUnit getSelectedTimeUnit() {
-        int position = spinnerTimeUnit.getSelectedItemPosition();
-
-        switch (position) {
-            case 0: return Notification.TimeUnit.MINUTES;
+        switch (spinnerTimeUnit.getSelectedItemPosition()) {
             case 1: return Notification.TimeUnit.HOURS;
             case 2: return Notification.TimeUnit.DAYS;
             case 3: return Notification.TimeUnit.WEEKS;

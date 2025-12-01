@@ -16,8 +16,8 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.firebase.ui.auth.AuthUI;
 import com.firebase.ui.auth.FirebaseAuthUIActivityResultContract;
-import com.firebase.ui.auth.data.model.FirebaseAuthUIAuthenticationResult;
 import com.firebase.ui.auth.IdpResponse;
+import com.firebase.ui.auth.data.model.FirebaseAuthUIAuthenticationResult;
 import com.google.android.gms.common.SignInButton;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -51,14 +51,12 @@ public class LoginActivity extends AppCompatActivity {
 
         mAuth = FirebaseAuth.getInstance();
 
-        // Si ya está logueado → ir a Main
         FirebaseUser currentUser = mAuth.getCurrentUser();
         if (currentUser != null) {
-            initializeUserInFirestore(currentUser, () -> {
-                goToMainActivity();
-            });
+            initializeUserInFirestore(currentUser, this::goToMainActivity);
             return;
         }
+
         ImageButton btnLanguage = findViewById(R.id.btn_language);
         btnLanguage.setOnClickListener(v -> showLanguageDialog());
 
@@ -70,28 +68,7 @@ public class LoginActivity extends AppCompatActivity {
         loginButton = findViewById(R.id.log_in);
         googleButton = findViewById(R.id.btn_google);
 
-        // LOGIN EMAIL/PASSWORD
-        loginButton.setOnClickListener(v -> {
-            String email = emailField.getText().toString().trim();
-            String password = passwordField.getText().toString().trim();
-
-            if (email.isEmpty() || password.isEmpty()) {
-                Toast.makeText(this, "Por favor, introduce el correo y la contraseña", Toast.LENGTH_SHORT).show();
-                return;
-            }
-
-            mAuth.signInWithEmailAndPassword(email, password)
-                    .addOnCompleteListener(this, task -> {
-                        if (task.isSuccessful()) {
-                            FirebaseUser firebaseUser = mAuth.getCurrentUser();
-
-                            initializeUserInFirestore(firebaseUser, () -> {
-                                goToMainActivity();
-                            });
-                        }
-                    });
-        });
-
+        loginButton.setOnClickListener(v -> loginWithEmail());
         googleButton.setOnClickListener(v -> launchGoogleSignIn());
     }
 
@@ -100,10 +77,27 @@ public class LoginActivity extends AppCompatActivity {
         super.attachBaseContext(es.fdi.ucm.pad.notnotion.utils.LocaleHelper.applyLocale(newBase));
     }
 
+    private void loginWithEmail() {
+        String email = emailField.getText().toString().trim();
+        String password = passwordField.getText().toString().trim();
 
+        if (email.isEmpty() || password.isEmpty()) {
+            Toast.makeText(this, "Por favor, introduce el correo y la contraseña", Toast.LENGTH_SHORT).show();
+            return;
+        }
 
+        mAuth.signInWithEmailAndPassword(email, password)
+                .addOnCompleteListener(this, task -> {
+                    if (!task.isSuccessful()) {
+                        Toast.makeText(this, "Error al iniciar sesión", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
 
-    // GOOGLE LOGIN
+                    FirebaseUser firebaseUser = mAuth.getCurrentUser();
+                    initializeUserInFirestore(firebaseUser, this::goToMainActivity);
+                });
+    }
+
     private void launchGoogleSignIn() {
         List<AuthUI.IdpConfig> providers = Arrays.asList(
                 new AuthUI.IdpConfig.GoogleBuilder().build()
@@ -126,21 +120,18 @@ public class LoginActivity extends AppCompatActivity {
 
         if (resultCode == RESULT_OK) {
             FirebaseUser firebaseUser = mAuth.getCurrentUser();
+            initializeUserInFirestore(firebaseUser, this::goToMainActivity);
+            return;
+        }
 
-            initializeUserInFirestore(firebaseUser, () -> {
-                goToMainActivity();
-            });
+        if (response == null) {
+            Toast.makeText(this, "Inicio de sesión cancelado", Toast.LENGTH_SHORT).show();
         } else {
-            if (response == null) {
-                Toast.makeText(this, "Inicio de sesión cancelado", Toast.LENGTH_SHORT).show();
-            } else {
-                Toast.makeText(this, "Error: " + response.getError(), Toast.LENGTH_SHORT).show();
-            }
+            Toast.makeText(this, "Error: " + response.getError(), Toast.LENGTH_SHORT).show();
         }
     }
 
     private void initializeUserInFirestore(FirebaseUser firebaseUser, Runnable onComplete) {
-
         if (firebaseUser == null) {
             onComplete.run();
             return;
@@ -149,15 +140,12 @@ public class LoginActivity extends AppCompatActivity {
         FirebaseFirestoreManager ffm = new FirebaseFirestoreManager();
 
         ffm.getCurrentUserData(userData -> {
-
             if (userData == null) {
                 Log.w("InitUser", "Usuario Firestore NO existe → creando estructura...");
-
                 ffm.initializeUserStructure(firebaseUser, () -> {
                     Log.d("InitUser", "Estructura creada → continuando");
                     onComplete.run();
                 });
-
             } else {
                 Log.i("InitUser", "Usuario Firestore YA existe");
                 onComplete.run();
@@ -178,8 +166,8 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     private void showLanguageDialog() {
-        final String[] languages = {"Español", "English"};
-        final String[] codes = {"es", "en"};
+        String[] languages = {"Español", "English"};
+        String[] codes = {"es", "en"};
 
         new android.app.AlertDialog.Builder(this)
                 .setTitle(getString(R.string.select_language))

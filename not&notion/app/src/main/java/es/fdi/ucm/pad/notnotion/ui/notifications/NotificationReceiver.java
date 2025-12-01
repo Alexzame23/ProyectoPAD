@@ -13,7 +13,6 @@ public class NotificationReceiver extends BroadcastReceiver {
 
     @Override
     public void onReceive(Context context, Intent intent) {
-
         Log.d(TAG, "Notificación recibida");
 
         String eventId = intent.getStringExtra("eventId");
@@ -22,7 +21,7 @@ public class NotificationReceiver extends BroadcastReceiver {
         long eventTimeMillis = intent.getLongExtra("eventTimeMillis", 0);
         String soundType = intent.getStringExtra("soundType");
         boolean isEventTimeAlarm = intent.getBooleanExtra("isEventTimeAlarm", false);
-        boolean isSnoozed = intent.getBooleanExtra("isSnoozed", false); // ✅ NUEVO
+        boolean isSnoozed = intent.getBooleanExtra("isSnoozed", false);
 
         if (eventId == null || eventTitle == null) {
             Log.e(TAG, "Datos del evento incompletos");
@@ -30,17 +29,15 @@ public class NotificationReceiver extends BroadcastReceiver {
         }
 
         if (isEventTimeAlarm) {
-            // Alarma en el momento del evento (con snooze)
             NotificationHelper.showEventAlarm(
                     context,
                     eventId,
                     eventTitle,
                     eventDescription != null ? eventDescription : "",
                     soundType != null ? soundType : "alarm",
-                    isSnoozed // ✅ Pasar flag
+                    isSnoozed
             );
         } else {
-            // Notificación previa (recordatorio)
             NotificationHelper.showEventNotification(
                     context,
                     eventId,

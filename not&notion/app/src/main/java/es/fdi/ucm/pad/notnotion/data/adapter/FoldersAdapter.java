@@ -1,6 +1,5 @@
 package es.fdi.ucm.pad.notnotion.data.adapter;
 
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -18,11 +17,9 @@ import es.fdi.ucm.pad.notnotion.data.model.Folder;
 
 public class FoldersAdapter extends RecyclerView.Adapter<FoldersAdapter.FolderViewHolder> {
 
-    private static final String TAG = "BUSQUEDA_DEBUG";
-    private List<Folder> folders = new ArrayList<>();
-    private List<Folder> fullList = new ArrayList<>();
+    private final List<Folder> folders = new ArrayList<>();
+    private final List<Folder> fullList = new ArrayList<>();
 
-    // ------------------- CLICK NORMAL --------------------
     public interface OnFolderClickListener {
         void onFolderClick(Folder folder);
     }
@@ -33,7 +30,6 @@ public class FoldersAdapter extends RecyclerView.Adapter<FoldersAdapter.FolderVi
         this.listener = listener;
     }
 
-    // ------------------- LONG CLICK --------------------
     public interface OnFolderLongClickListener {
         void onFolderLongClick(Folder folder, View view);
     }
@@ -43,8 +39,6 @@ public class FoldersAdapter extends RecyclerView.Adapter<FoldersAdapter.FolderVi
     public void setOnFolderLongClickListener(OnFolderLongClickListener longClickListener) {
         this.longClickListener = longClickListener;
     }
-
-    // -----------------------------------------------------
 
     @NonNull
     @Override
@@ -57,18 +51,19 @@ public class FoldersAdapter extends RecyclerView.Adapter<FoldersAdapter.FolderVi
     @Override
     public void onBindViewHolder(@NonNull FolderViewHolder holder, int position) {
         Folder folder = folders.get(position);
-
         holder.folderName.setText(folder.getName());
         holder.folderIcon.setImageResource(R.drawable.icon_folder);
 
-        // CLICK NORMAL
         holder.itemView.setOnClickListener(v -> {
-            if (listener != null) listener.onFolderClick(folder);
+            if (listener != null) {
+                listener.onFolderClick(folder);
+            }
         });
 
-        // LONG CLICK (2 segundos)
         holder.itemView.setOnLongClickListener(v -> {
-            if (longClickListener != null) longClickListener.onFolderLongClick(folder, v);
+            if (longClickListener != null) {
+                longClickListener.onFolderLongClick(folder, v);
+            }
             return true;
         });
     }
@@ -96,24 +91,27 @@ public class FoldersAdapter extends RecyclerView.Adapter<FoldersAdapter.FolderVi
 
     public void filter(String text) {
         folders.clear();
+
         if (text == null || text.trim().isEmpty()) {
             folders.addAll(fullList);
         } else {
-            String q = text.toLowerCase();
+            String query = text.toLowerCase();
             for (Folder f : fullList) {
-                if (f.getName() != null && f.getName().toLowerCase().contains(q)) {
+                String name = f.getName();
+                if (name != null && name.toLowerCase().contains(query)) {
                     folders.add(f);
                 }
             }
         }
+
         notifyDataSetChanged();
     }
 
     static class FolderViewHolder extends RecyclerView.ViewHolder {
-        TextView folderName;
-        ImageView folderIcon;
+        final TextView folderName;
+        final ImageView folderIcon;
 
-        public FolderViewHolder(View itemView) {
+        FolderViewHolder(View itemView) {
             super(itemView);
             folderName = itemView.findViewById(R.id.folderName);
             folderIcon = itemView.findViewById(R.id.folderIcon);

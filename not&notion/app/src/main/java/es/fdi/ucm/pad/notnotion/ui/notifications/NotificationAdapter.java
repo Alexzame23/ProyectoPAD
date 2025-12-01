@@ -15,13 +15,10 @@ import java.util.List;
 import es.fdi.ucm.pad.notnotion.R;
 import es.fdi.ucm.pad.notnotion.data.model.Notification;
 
-/**
- * Adapter para mostrar la lista de notificaciones configuradas
- */
 public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapter.ViewHolder> {
 
     private List<Notification> items = new ArrayList<>();
-    private OnItemDeleteListener deleteListener;
+    private final OnItemDeleteListener deleteListener;
 
     public interface OnItemDeleteListener {
         void onDelete(Notification item, int position);
@@ -41,8 +38,7 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-        Notification item = items.get(position);
-        holder.bind(item, position);
+        holder.bind(items.get(position), position);
     }
 
     @Override
@@ -50,8 +46,8 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
         return items.size();
     }
 
-    public void setItems(List<Notification> items) {
-        this.items = items != null ? new ArrayList<>(items) : new ArrayList<>();
+    public void setItems(List<Notification> list) {
+        items = list != null ? new ArrayList<>(list) : new ArrayList<>();
         notifyDataSetChanged();
     }
 
@@ -60,7 +56,6 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
     }
 
     public void addItem(Notification item) {
-        // Evitar duplicados
         if (!items.contains(item)) {
             items.add(item);
             notifyItemInserted(items.size() - 1);
@@ -76,8 +71,8 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
 
     class ViewHolder extends RecyclerView.ViewHolder {
 
-        TextView tvNotificationText;
-        ImageButton btnDelete;
+        private final TextView tvNotificationText;
+        private final ImageButton btnDelete;
 
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -87,7 +82,6 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
 
         public void bind(Notification item, int position) {
             tvNotificationText.setText("🔔 " + item.getDisplayText());
-
             btnDelete.setOnClickListener(v -> {
                 if (deleteListener != null) {
                     deleteListener.onDelete(item, position);

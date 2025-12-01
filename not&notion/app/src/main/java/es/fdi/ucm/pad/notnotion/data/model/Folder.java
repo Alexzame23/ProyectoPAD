@@ -3,16 +3,18 @@ package es.fdi.ucm.pad.notnotion.data.model;
 import com.google.firebase.Timestamp;
 
 public class Folder {
+
     private String id;
     private String name;
-    private String parentFolderId; // puede ser null
+    private String parentFolderId;
     private Timestamp createdAt;
     private Timestamp updatedAt;
-    private int type; // 0 = carpeta normal, podrías extenderlo en el futuro
+    private int type;
 
     public Folder() {}
 
-    public Folder(String id, String name, String parentFolderId, Timestamp createdAt, Timestamp updatedAt, int type) {
+    public Folder(String id, String name, String parentFolderId,
+                  Timestamp createdAt, Timestamp updatedAt, int type) {
         this.id = id;
         this.name = name;
         this.parentFolderId = parentFolderId;
@@ -21,7 +23,6 @@ public class Folder {
         this.type = type;
     }
 
-    // 🔹 Getters y Setters
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
 

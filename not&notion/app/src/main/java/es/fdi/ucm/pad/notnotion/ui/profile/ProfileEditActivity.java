@@ -32,8 +32,7 @@ public class ProfileEditActivity extends AppCompatActivity {
     private Button btnChangePhoto, btnSaveChanges;
     private EditText etName, etCurrentPassword, etNewPassword, etRepeatPassword;
 
-    private String profileBase64 = null; // FOTO EN BASE64
-
+    private String profileBase64;
     private FirebaseAuth auth;
     private FirebaseFirestore db;
 
@@ -45,7 +44,6 @@ public class ProfileEditActivity extends AppCompatActivity {
         auth = FirebaseAuth.getInstance();
         db = FirebaseFirestore.getInstance();
 
-        // UI
         imgProfilePhotoEdit = findViewById(R.id.imgProfilePhotoEdit);
         btnChangePhoto = findViewById(R.id.btnChangePhoto);
         btnSaveChanges = findViewById(R.id.btnSaveChanges);
@@ -63,165 +61,140 @@ public class ProfileEditActivity extends AppCompatActivity {
             return;
         }
 
-        String uid = user.getUid();
-
-        // Cargar nombre y foto desde Firestore
-        db.collection("users").document(uid)
-                .get()
-                .addOnSuccessListener(doc -> {
-                    if (doc.exists()) {
-
-                        // Nombre
-                        if (doc.getString("username") != null) {
-                            etName.setText(doc.getString("username"));
-                        }
-
-                        // FOTO Base64
-                        if (doc.getString("photoBase64") != null) {
-                            profileBase64 = doc.getString("photoBase64");
-
-                            Bitmap bmp = ImageHelper.convertBase64ToBitmap(profileBase64);
-                            if (bmp != null) imgProfilePhotoEdit.setImageBitmap(bmp);
-                        } else {
-                            imgProfilePhotoEdit.setImageResource(R.drawable.ic_user);
-                        }
-                    }
-                });
-
-        // Botón cambiar foto
+        loadUserData(user.getUid());
         btnChangePhoto.setOnClickListener(v -> openImagePicker());
-
-        // Guardar
         btnSaveChanges.setOnClickListener(v -> saveChanges());
     }
 
-    // ============================================
-    // SELECCIÓN DE IMAGEN
-    // ============================================
+    private void loadUserData(String uid) {
+        db.collection("users").document(uid)
+                .get()
+                .addOnSuccessListener(doc -> {
+                    if (!doc.exists()) return;
+
+                    if (doc.getString("username") != null) {
+                        etName.setText(doc.getString("username"));
+                    }
+
+                    String img = doc.getString("photoBase64");
+                    if (img != null) {
+                        profileBase64 = img;
+                        Bitmap bmp = ImageHelper.convertBase64ToBitmap(img);
+                        if (bmp != null) imgProfilePhotoEdit.setImageBitmap(bmp);
+                    } else {
+                        imgProfilePhotoEdit.setImageResource(R.drawable.ic_user);
+                    }
+                });
+    }
 
     private void openImagePicker() {
         Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
         intent.setType("image/*");
-        startActivityForResult(Intent.createChooser(intent, "Selecciona una imagen"), PICK_IMAGE_REQUEST);
+        startActivityForResult(
+                Intent.createChooser(intent, "Selecciona una imagen"),
+                PICK_IMAGE_REQUEST
+        );
     }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 
-        if (requestCode == PICK_IMAGE_REQUEST && resultCode == RESULT_OK && data != null && data.getData() != null) {
-
+        if (requestCode == PICK_IMAGE_REQUEST && resultCode == RESULT_OK && data != null) {
             Uri uri = data.getData();
+            if (uri == null) return;
 
-            // Convertir la imagen a Base64
             profileBase64 = ImageHelper.convertImageToBase64(this, uri);
-
-            // Mostrar imagen
             Bitmap bmp = ImageHelper.convertBase64ToBitmap(profileBase64);
-            imgProfilePhotoEdit.setImageBitmap(bmp);
+
+            if (bmp != null) imgProfilePhotoEdit.setImageBitmap(bmp);
         }
     }
-
-    // ============================================
-    // GUARDADO DE CAMBIOS
-    // ============================================
 
     private void saveChanges() {
 
         FirebaseUser user = auth.getCurrentUser();
         if (user == null) return;
 
-        String newName = etName.getText().toString().trim();
+        String name = etName.getText().toString().trim();
         String currentPass = etCurrentPassword.getText().toString().trim();
         String newPass = etNewPassword.getText().toString().trim();
         String repeatPass = etRepeatPassword.getText().toString().trim();
 
-        if (newName.isEmpty()) {
+        if (name.isEmpty()) {
             Toast.makeText(this, "El nombre no puede estar vacío", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        boolean wantsPassword =
+        boolean changingPassword =
                 !currentPass.isEmpty() || !newPass.isEmpty() || !repeatPass.isEmpty();
 
-        if (wantsPassword) {
+        if (changingPassword) {
 
             if (currentPass.isEmpty() || newPass.isEmpty() || repeatPass.isEmpty()) {
-                Toast.makeText(this, "Rellena todos los campos de contraseña", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, "Completa todos los campos de contraseña", Toast.LENGTH_SHORT).show();
                 return;
             }
+
             if (!newPass.equals(repeatPass)) {
                 Toast.makeText(this, "Las contraseñas no coinciden", Toast.LENGTH_SHORT).show();
                 return;
             }
+
             if (newPass.length() < 6) {
-                Toast.makeText(this, "Mínimo 6 caracteres", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, "La nueva contraseña debe tener al menos 6 caracteres", Toast.LENGTH_SHORT).show();
                 return;
             }
 
-            reauthenticateAndUpdate(user, newName, currentPass, newPass);
+            reauthenticate(user, name, currentPass, newPass);
 
         } else {
-            updateProfileData(user, newName, null);
+            updateUserProfile(user, name, null);
         }
     }
 
-    // ============================================
-    // REAUTENTICACIÓN
-    // ============================================
-
-    private void reauthenticateAndUpdate(FirebaseUser user, String newName,
-                                         String currentPass, String newPass) {
-
+    private void reauthenticate(FirebaseUser user, String newName, String currentPass, String newPass) {
         user.reauthenticate(EmailAuthProvider.getCredential(user.getEmail(), currentPass))
-                .addOnSuccessListener(unused -> updateProfileData(user, newName, newPass))
+                .addOnSuccessListener(unused -> updateUserProfile(user, newName, newPass))
                 .addOnFailureListener(e ->
                         Toast.makeText(this, "Contraseña actual incorrecta", Toast.LENGTH_SHORT).show()
                 );
     }
 
-    // ============================================
-    // ACTUALIZAR FIRESTORE + AUTH
-    // ============================================
-
-    private void updateProfileData(FirebaseUser user, String newName, @Nullable String newPass) {
+    private void updateUserProfile(FirebaseUser user, String newName, @Nullable String newPass) {
 
         String uid = user.getUid();
 
-        // 1) Actualizar Auth SOLO el displayName
-        UserProfileChangeRequest.Builder builder = new UserProfileChangeRequest.Builder()
-                .setDisplayName(newName);
+        UserProfileChangeRequest change = new UserProfileChangeRequest.Builder()
+                .setDisplayName(newName)
+                .setPhotoUri(null)
+                .build();
 
-        // FirebaseAuth NO soporta Base64 → ponemos la foto a null
-        builder.setPhotoUri(null);
+        user.updateProfile(change);
 
-        user.updateProfile(builder.build());
-
-        // 2) Actualizar Firestore
         Map<String, Object> updates = new HashMap<>();
         updates.put("username", newName);
-
         if (profileBase64 != null) updates.put("photoBase64", profileBase64);
 
         db.collection("users").document(uid)
                 .update(updates)
                 .addOnSuccessListener(unused -> {
-
                     if (newPass != null && !newPass.isEmpty()) {
-
                         user.updatePassword(newPass)
-                                .addOnSuccessListener(unused2 -> {
+                                .addOnSuccessListener(u -> {
                                     Toast.makeText(this, "Perfil actualizado", Toast.LENGTH_SHORT).show();
                                     finish();
                                 })
                                 .addOnFailureListener(e ->
-                                        Toast.makeText(this, "Error al cambiar contraseña", Toast.LENGTH_SHORT).show());
+                                        Toast.makeText(this, "Error al cambiar contraseña", Toast.LENGTH_SHORT).show()
+                                );
                     } else {
                         Toast.makeText(this, "Perfil actualizado", Toast.LENGTH_SHORT).show();
                         finish();
                     }
                 })
                 .addOnFailureListener(e ->
-                        Toast.makeText(this, "Error actualizando Firestore", Toast.LENGTH_SHORT).show());
+                        Toast.makeText(this, "Error actualizando Firestore", Toast.LENGTH_SHORT).show()
+                );
     }
 }

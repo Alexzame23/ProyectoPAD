@@ -23,26 +23,20 @@ import java.util.List;
 
 import es.fdi.ucm.pad.notnotion.R;
 import es.fdi.ucm.pad.notnotion.data.model.Notification;
-import es.fdi.ucm.pad.notnotion.ui.notifications.NotificationAdapter;
 
 public class NotificationConfigDialog extends Dialog {
 
-    private CheckBox chkEnableNotifications;
-    private CheckBox chkNotifyAtEventTime;
-    private LinearLayout layoutNotificationOptions;
-    private LinearLayout layoutEventTimeOptions;
+    private CheckBox chkEnableNotifications, chkNotifyAtEventTime;
+    private LinearLayout layoutNotificationOptions, layoutEventTimeOptions;
     private RecyclerView recyclerNotifications;
     private TextView tvNoNotifications;
-    private Button btnAddNotification;
+    private Button btnAddNotification, btnSave, btnCancel;
 
-    private RadioGroup radioGroupSound;
+    private RadioGroup radioGroupSound, radioGroupEventTimeSound;
     private RadioButton radioDefault, radioSilent;
-
-    // Radio group para sonido de alarma del momento
-    private RadioGroup radioGroupEventTimeSound;
     private RadioButton radioAlarmSound, radioDefaultSound, radioSilentSound;
 
-    private Button btnSave, btnCancel;
+    private Spinner spinnerMaxSnooze;
 
     private NotificationAdapter adapter;
     private OnNotificationConfigListener listener;
@@ -51,14 +45,17 @@ public class NotificationConfigDialog extends Dialog {
     private List<Notification> currentItems;
     private String currentSoundType;
 
-    // Estado de alarma del momento
     private boolean notifyAtEventTime;
     private String eventTimeSoundType;
-    private Spinner spinnerMaxSnooze;
 
     public interface OnNotificationConfigListener {
-        void onConfigSaved(boolean enabled, List<Long> times, String soundType,
-                           boolean notifyAtEventTime, String eventTimeSoundType);
+        void onConfigSaved(
+                boolean enabled,
+                List<Long> times,
+                String soundType,
+                boolean notifyAtEventTime,
+                String eventTimeSoundType
+        );
     }
 
     public NotificationConfigDialog(@NonNull Context context, OnNotificationConfigListener listener) {
@@ -86,8 +83,10 @@ public class NotificationConfigDialog extends Dialog {
     private void initViews() {
         chkEnableNotifications = findViewById(R.id.chkEnableNotifications);
         chkNotifyAtEventTime = findViewById(R.id.chkNotifyAtEventTime);
+
         layoutNotificationOptions = findViewById(R.id.layoutNotificationOptions);
         layoutEventTimeOptions = findViewById(R.id.layoutEventTimeOptions);
+
         recyclerNotifications = findViewById(R.id.recyclerNotifications);
         tvNoNotifications = findViewById(R.id.tvNoNotifications);
         btnAddNotification = findViewById(R.id.btnAddNotification);
@@ -96,16 +95,15 @@ public class NotificationConfigDialog extends Dialog {
         radioDefault = findViewById(R.id.radioDefault);
         radioSilent = findViewById(R.id.radioSilent);
 
-        // Radio group para sonido de alarma del momento
         radioGroupEventTimeSound = findViewById(R.id.radioGroupEventTimeSound);
         radioAlarmSound = findViewById(R.id.radioAlarmSound);
         radioDefaultSound = findViewById(R.id.radioDefaultSound);
         radioSilentSound = findViewById(R.id.radioSilentSound);
+
         spinnerMaxSnooze = findViewById(R.id.spinnerMaxSnooze);
 
         btnSave = findViewById(R.id.btnSaveConfig);
         btnCancel = findViewById(R.id.btnCancelConfig);
-
     }
 
     private void setupRecyclerView() {
@@ -119,23 +117,21 @@ public class NotificationConfigDialog extends Dialog {
     }
 
     private void setupListeners() {
-        chkEnableNotifications.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            layoutNotificationOptions.setVisibility(isChecked ? View.VISIBLE : View.GONE);
-        });
+        chkEnableNotifications.setOnCheckedChangeListener((b, checked) ->
+                layoutNotificationOptions.setVisibility(checked ? View.VISIBLE : View.GONE)
+        );
 
-        // Listener para checkbox de alarma del momento
-        chkNotifyAtEventTime.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            layoutEventTimeOptions.setVisibility(isChecked ? View.VISIBLE : View.GONE);
-        });
+        chkNotifyAtEventTime.setOnCheckedChangeListener((b, checked) ->
+                layoutEventTimeOptions.setVisibility(checked ? View.VISIBLE : View.GONE)
+        );
 
         btnAddNotification.setOnClickListener(v -> openAddNotificationDialog());
-
         btnSave.setOnClickListener(v -> saveConfiguration());
         btnCancel.setOnClickListener(v -> dismiss());
     }
 
     private void setupMaxSnoozeSpinner() {
-        String[] options = new String[]{
+        String[] options = {
                 "Sin límite",
                 "Máximo 1 vez",
                 "Máximo 2 veces",
@@ -148,6 +144,7 @@ public class NotificationConfigDialog extends Dialog {
                 android.R.layout.simple_spinner_item,
                 options
         );
+
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinnerMaxSnooze.setAdapter(adapter);
     }
@@ -159,25 +156,15 @@ public class NotificationConfigDialog extends Dialog {
         adapter.setItems(currentItems);
         updateEmptyState();
 
-        // Sonido de notificaciones previas
-        if ("silent".equals(currentSoundType)) {
-            radioSilent.setChecked(true);
-        } else {
-            radioDefault.setChecked(true);
-        }
+        if ("silent".equals(currentSoundType)) radioSilent.setChecked(true);
+        else radioDefault.setChecked(true);
 
-        // Configuración de alarma del momento
         chkNotifyAtEventTime.setChecked(notifyAtEventTime);
         layoutEventTimeOptions.setVisibility(notifyAtEventTime ? View.VISIBLE : View.GONE);
 
-        // Sonido de alarma del momento
-        if ("alarm".equals(eventTimeSoundType)) {
-            radioAlarmSound.setChecked(true);
-        } else if ("silent".equals(eventTimeSoundType)) {
-            radioSilentSound.setChecked(true);
-        } else {
-            radioDefaultSound.setChecked(true);
-        }
+        if ("alarm".equals(eventTimeSoundType)) radioAlarmSound.setChecked(true);
+        else if ("silent".equals(eventTimeSoundType)) radioSilentSound.setChecked(true);
+        else radioDefaultSound.setChecked(true);
     }
 
     private void openAddNotificationDialog() {
@@ -190,61 +177,53 @@ public class NotificationConfigDialog extends Dialog {
     }
 
     private void updateEmptyState() {
-        if (adapter.getItemCount() == 0) {
-            tvNoNotifications.setVisibility(View.VISIBLE);
-            recyclerNotifications.setVisibility(View.GONE);
-        } else {
-            tvNoNotifications.setVisibility(View.GONE);
-            recyclerNotifications.setVisibility(View.VISIBLE);
-        }
+        boolean empty = adapter.getItemCount() == 0;
+        tvNoNotifications.setVisibility(empty ? View.VISIBLE : View.GONE);
+        recyclerNotifications.setVisibility(empty ? View.GONE : View.VISIBLE);
     }
 
     private void saveConfiguration() {
         boolean enabled = chkEnableNotifications.isChecked();
-        int maxSnoozeAllowed = spinnerMaxSnooze.getSelectedItemPosition();
 
         List<Long> times = new ArrayList<>();
         if (enabled) {
-            List<Notification> items = adapter.getItems();
-            for (Notification item : items) {
-                times.add(item.getMillisBeforeEvent());
+            for (Notification n : adapter.getItems()) {
+                times.add(n.getMillisBeforeEvent());
             }
         }
 
         String sound = radioSilent.isChecked() ? "silent" : "default";
 
-        // Configuración de alarma del momento
-        boolean notifyAtTime = chkNotifyAtEventTime.isChecked();
+        boolean notifyTime = chkNotifyAtEventTime.isChecked();
         String eventTimeSound = "default";
-        if (radioAlarmSound.isChecked()) {
-            eventTimeSound = "alarm";
-        } else if (radioSilentSound.isChecked()) {
-            eventTimeSound = "silent";
-        }
+
+        if (radioAlarmSound.isChecked()) eventTimeSound = "alarm";
+        else if (radioSilentSound.isChecked()) eventTimeSound = "silent";
 
         if (listener != null) {
-            listener.onConfigSaved(enabled, times, sound, notifyAtTime, eventTimeSound);
+            listener.onConfigSaved(enabled, times, sound, notifyTime, eventTimeSound);
         }
 
         dismiss();
     }
 
-    /**
-     * Establece la configuración actual desde el evento
-     */
-    public void setCurrentConfig(boolean enabled, List<Long> times, String sound,
-                                 boolean notifyAtEventTime, String eventTimeSoundType) {
-        this.notificationsEnabled = enabled;
-        this.currentSoundType = sound != null ? sound : "default";
+    public void setCurrentConfig(
+            boolean enabled,
+            List<Long> times,
+            String sound,
+            boolean notifyAtEventTime,
+            String eventTimeSoundType
+    ) {
+        notificationsEnabled = enabled;
+        currentSoundType = sound != null ? sound : "default";
 
-        this.currentItems = new ArrayList<>();
+        currentItems = new ArrayList<>();
         if (times != null) {
             for (Long millis : times) {
                 currentItems.add(new Notification(millis));
             }
         }
 
-        // Configuración de alarma del momento
         this.notifyAtEventTime = notifyAtEventTime;
         this.eventTimeSoundType = eventTimeSoundType != null ? eventTimeSoundType : "alarm";
     }

@@ -11,71 +11,53 @@ import android.util.Log;
 import java.util.List;
 
 import es.fdi.ucm.pad.notnotion.data.model.CalendarEvent;
-import es.fdi.ucm.pad.notnotion.ui.notifications.NotificationReceiver;
 import es.fdi.ucm.pad.notnotion.utils.NotificationHelper;
 
 public class NotificationScheduler {
 
     private static final String TAG = "NotificationScheduler";
 
-    /**
-     * Programa todas las notificaciones de un evento (previas + momento)
-     */
     public static void scheduleNotifications(Context context, CalendarEvent event) {
 
-        // Programar notificaciones previas
         if (event.isNotificationsEnabled() && event.getNotificationTimes() != null) {
             long eventTimeMillis = event.getStartDate().toDate().getTime();
-            List<Long> notificationTimes = event.getNotificationTimes();
 
-            for (int i = 0; i < notificationTimes.size(); i++) {
-                long millisBeforeEvent = notificationTimes.get(i);
-                long notificationTime = eventTimeMillis - millisBeforeEvent;
+            for (int i = 0; i < event.getNotificationTimes().size(); i++) {
+                long millisBeforeEvent = event.getNotificationTimes().get(i);
+                long triggerTime = eventTimeMillis - millisBeforeEvent;
 
-                if (notificationTime > System.currentTimeMillis()) {
-                    scheduleNotificationElapsed(context, event, notificationTime, i, false);
+                if (triggerTime > System.currentTimeMillis()) {
+                    scheduleElapsedNotification(context, event, triggerTime, i, false);
                 } else {
-                    Log.d(TAG, "Notificación previa en el pasado, se omite");
+                    Log.d(TAG, "Notificación previa descartada (tiempo pasado)");
                 }
             }
         }
 
-        // Programar alarma en el momento del evento
         if (event.isNotifyAtEventTime()) {
             long eventTimeMillis = event.getStartDate().toDate().getTime();
-
             if (eventTimeMillis > System.currentTimeMillis()) {
                 scheduleEventTimeAlarm(context, event, eventTimeMillis);
             } else {
-                Log.d(TAG, "Alarma del momento en el pasado, se omite");
+                Log.d(TAG, "Alarma del momento descartada (tiempo pasado)");
             }
         }
     }
 
-    /**
-     * Programa una notificación usando ELAPSED_REALTIME_WAKEUP
-     *
-     * @param targetTimeMillis Tiempo absoluto (System.currentTimeMillis) en que debe disparar
-     */
-    private static void scheduleNotificationElapsed(
+    private static void scheduleElapsedNotification(
             Context context,
             CalendarEvent event,
-            long targetTimeMillis,
-            int notificationIndex,
-            boolean isEventTimeAlarm
+            long targetMillis,
+            int index,
+            boolean isEventTime
     ) {
-
         AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
-        if (alarmManager == null) {
-            Log.e(TAG, "AlarmManager no disponible");
-            return;
-        }
+        if (alarmManager == null) return;
 
-        // Convertir tiempo absoluto a tiempo relativo (ELAPSED)
-        long currentTimeMillis = System.currentTimeMillis();
-        long elapsedRealtimeNow = SystemClock.elapsedRealtime();
-        long delayMillis = targetTimeMillis - currentTimeMillis;
-        long triggerAtElapsed = elapsedRealtimeNow + delayMillis;
+        long now = System.currentTimeMillis();
+        long elapsedNow = SystemClock.elapsedRealtime();
+        long delay = targetMillis - now;
+        long triggerAt = elapsedNow + delay;
 
         Intent intent = new Intent(context, NotificationReceiver.class);
         intent.putExtra("eventId", event.getId());
@@ -83,54 +65,37 @@ public class NotificationScheduler {
         intent.putExtra("eventDescription", event.getDescription());
         intent.putExtra("eventTimeMillis", event.getStartDate().toDate().getTime());
         intent.putExtra("soundType", event.getNotificationSound());
-        intent.putExtra("isEventTimeAlarm", isEventTimeAlarm);
+        intent.putExtra("isEventTimeAlarm", isEventTime);
         intent.putExtra("isSnoozed", false);
 
-        int requestCode = generateRequestCode(event.getId(), notificationIndex);
-
-        PendingIntent pendingIntent = PendingIntent.getBroadcast(
+        PendingIntent pi = PendingIntent.getBroadcast(
                 context,
-                requestCode,
+                generateRequestCode(event.getId(), index),
                 intent,
                 PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
         );
 
         try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                // Usar ELAPSED_REALTIME_WAKEUP con setExactAndAllowWhileIdle
                 alarmManager.setExactAndAllowWhileIdle(
-                        AlarmManager.ELAPSED_REALTIME_WAKEUP,
-                        triggerAtElapsed,
-                        pendingIntent
+                        AlarmManager.ELAPSED_REALTIME_WAKEUP, triggerAt, pi
                 );
             } else {
                 alarmManager.setExact(
-                        AlarmManager.ELAPSED_REALTIME_WAKEUP,
-                        triggerAtElapsed,
-                        pendingIntent
+                        AlarmManager.ELAPSED_REALTIME_WAKEUP, triggerAt, pi
                 );
             }
 
-            Log.d(TAG, "Notificación programada (ELAPSED_REALTIME): " + event.getTitle() +
-                    "\n   Disparará en: " + (delayMillis / 1000) + " segundos" +
-                    "\n   Hora objetivo: " + new java.util.Date(targetTimeMillis) +
-                    "\n   ElapsedRealtime: " + triggerAtElapsed);
-
+            Log.d(TAG, "Notificación programada en " + (delay / 1000) + "s");
         } catch (SecurityException e) {
-            Log.e(TAG, "Permiso SCHEDULE_EXACT_ALARM denegado", e);
+            Log.e(TAG, "Error: permiso SCHEDULE_EXACT_ALARM denegado", e);
         }
     }
 
-    /**
-     * Programa la alarma en el momento exacto del evento
-     */
     private static void scheduleEventTimeAlarm(Context context, CalendarEvent event, long eventTimeMillis) {
 
         AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
-        if (alarmManager == null) {
-            Log.e(TAG, "AlarmManager no disponible");
-            return;
-        }
+        if (alarmManager == null) return;
 
         Intent intent = new Intent(context, NotificationReceiver.class);
         intent.putExtra("eventId", event.getId());
@@ -138,107 +103,66 @@ public class NotificationScheduler {
         intent.putExtra("eventDescription", event.getDescription());
         intent.putExtra("eventTimeMillis", eventTimeMillis);
         intent.putExtra("soundType", event.getEventTimeNotificationSound());
-        intent.putExtra("isEventTimeAlarm", true); // ✅ Marcar como alarma del momento
+        intent.putExtra("isEventTimeAlarm", true);
 
-        // RequestCode especial para alarma del momento
-        int requestCode = generateEventTimeAlarmRequestCode(event.getId());
-
-        PendingIntent pendingIntent = PendingIntent.getBroadcast(
+        PendingIntent pi = PendingIntent.getBroadcast(
                 context,
-                requestCode,
+                generateEventTimeRequestCode(event.getId()),
                 intent,
                 PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
         );
 
         try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                // Usar setAlarmClock para máxima prioridad
-                AlarmManager.AlarmClockInfo alarmClockInfo = new AlarmManager.AlarmClockInfo(
-                        eventTimeMillis,
-                        pendingIntent
-                );
-                alarmManager.setAlarmClock(alarmClockInfo, pendingIntent);
+                AlarmManager.AlarmClockInfo alarmInfo = new AlarmManager.AlarmClockInfo(eventTimeMillis, pi);
+                alarmManager.setAlarmClock(alarmInfo, pi);
             } else {
-                alarmManager.setExact(
-                        AlarmManager.RTC_WAKEUP,
-                        eventTimeMillis,
-                        pendingIntent
-                );
+                alarmManager.setExact(AlarmManager.RTC_WAKEUP, eventTimeMillis, pi);
             }
 
-            Log.d(TAG, "ALARMA DEL MOMENTO programada: " + event.getTitle() +
-                    " a las " + new java.util.Date(eventTimeMillis));
-
+            Log.d(TAG, "Alarma del momento programada");
         } catch (SecurityException e) {
-            Log.e(TAG, "Permiso SCHEDULE_EXACT_ALARM denegado", e);
+            Log.e(TAG, "Error programando alarma del evento", e);
         }
     }
 
-    /**
-     * Cancela todas las notificaciones programadas de un evento
-     */
     public static void cancelNotifications(Context context, CalendarEvent event) {
-
         AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
         if (alarmManager == null) return;
 
-        // Cancelar notificaciones previas
-        List<Long> notificationTimes = event.getNotificationTimes();
-        if (notificationTimes != null) {
-            for (int i = 0; i < notificationTimes.size(); i++) {
-                Intent intent = new Intent(context, NotificationReceiver.class);
-                int requestCode = generateRequestCode(event.getId(), i);
-
-                PendingIntent pendingIntent = PendingIntent.getBroadcast(
+        if (event.getNotificationTimes() != null) {
+            for (int i = 0; i < event.getNotificationTimes().size(); i++) {
+                PendingIntent pi = PendingIntent.getBroadcast(
                         context,
-                        requestCode,
-                        intent,
+                        generateRequestCode(event.getId(), i),
+                        new Intent(context, NotificationReceiver.class),
                         PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
                 );
-
-                alarmManager.cancel(pendingIntent);
+                alarmManager.cancel(pi);
             }
         }
 
-        // Cancelar alarma del momento
-        Intent intent = new Intent(context, NotificationReceiver.class);
-        int requestCode = generateEventTimeAlarmRequestCode(event.getId());
-
-        PendingIntent pendingIntent = PendingIntent.getBroadcast(
+        PendingIntent eventTimePI = PendingIntent.getBroadcast(
                 context,
-                requestCode,
-                intent,
+                generateEventTimeRequestCode(event.getId()),
+                new Intent(context, NotificationReceiver.class),
                 PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
         );
-
-        alarmManager.cancel(pendingIntent);
+        alarmManager.cancel(eventTimePI);
 
         NotificationHelper.cancelEventNotifications(context, event.getId());
 
-        // Cancelar posibles snoozes pendientes
         for (int i = 0; i <= event.getSnoozeCount(); i++) {
-            Intent snoozeIntent = new Intent(context, NotificationReceiver.class);
-            int snoozeRequestCode = generateSnoozeRequestCode(event.getId(), i);
-
-            PendingIntent snoozePendingIntent = PendingIntent.getBroadcast(
+            PendingIntent snoozePI = PendingIntent.getBroadcast(
                     context,
-                    snoozeRequestCode,
-                    snoozeIntent,
+                    generateSnoozeRequestCode(event.getId(), i),
+                    new Intent(context, NotificationReceiver.class),
                     PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
             );
-            alarmManager.cancel(snoozePendingIntent);
+            alarmManager.cancel(snoozePI);
         }
 
-        Log.d(TAG, "Todas las notificaciones canceladas para: " + event.getTitle());
-    }
-
-    private static int generateRequestCode(String eventId, int notificationIndex) {
-        return (eventId.hashCode() * 100) + notificationIndex;
-    }
-
-    // RequestCode especial para alarma del momento
-    private static int generateEventTimeAlarmRequestCode(String eventId) {
-        return (eventId.hashCode() * 1000);
+        Log.d(TAG, "Notificaciones canceladas para evento " + event.getId());
     }
 
     public static void rescheduleNotifications(Context context, CalendarEvent event) {
@@ -246,21 +170,15 @@ public class NotificationScheduler {
         scheduleNotifications(context, event);
     }
 
-    /**
-     * Programa una alarma pospuesta usando ELAPSED_REALTIME_WAKEUP
-     */
-    public static void scheduleSnoozeAlarm(Context context, CalendarEvent event, long targetTimeMillis) {
+    public static void scheduleSnoozeAlarm(Context context, CalendarEvent event, long targetMillis) {
 
         AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
-        if (alarmManager == null) {
-            Log.e(TAG, "AlarmManager no disponible");
-            return;
-        }
+        if (alarmManager == null) return;
 
-        long currentTimeMillis = System.currentTimeMillis();
-        long elapsedRealtimeNow = SystemClock.elapsedRealtime();
-        long delayMillis = targetTimeMillis - currentTimeMillis;
-        long triggerAtElapsed = elapsedRealtimeNow + delayMillis;
+        long now = System.currentTimeMillis();
+        long elapsedNow = SystemClock.elapsedRealtime();
+        long delay = targetMillis - now;
+        long triggerAt = elapsedNow + delay;
 
         Intent intent = new Intent(context, NotificationReceiver.class);
         intent.putExtra("eventId", event.getId());
@@ -271,42 +189,38 @@ public class NotificationScheduler {
         intent.putExtra("isEventTimeAlarm", true);
         intent.putExtra("isSnoozed", true);
 
-        int requestCode = generateSnoozeRequestCode(event.getId(), event.getSnoozeCount());
-
-        PendingIntent pendingIntent = PendingIntent.getBroadcast(
+        PendingIntent pi = PendingIntent.getBroadcast(
                 context,
-                requestCode,
+                generateSnoozeRequestCode(event.getId(), event.getSnoozeCount()),
                 intent,
                 PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
         );
 
         try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                // Usar ELAPSED_REALTIME para snooze
                 alarmManager.setExactAndAllowWhileIdle(
-                        AlarmManager.ELAPSED_REALTIME_WAKEUP,
-                        triggerAtElapsed,
-                        pendingIntent
+                        AlarmManager.ELAPSED_REALTIME_WAKEUP, triggerAt, pi
                 );
             } else {
                 alarmManager.setExact(
-                        AlarmManager.ELAPSED_REALTIME_WAKEUP,
-                        triggerAtElapsed,
-                        pendingIntent
+                        AlarmManager.ELAPSED_REALTIME_WAKEUP, triggerAt, pi
                 );
             }
 
-            Log.d(TAG, "🔁 Alarma POSPUESTA programada (ELAPSED_REALTIME): " + event.getTitle() +
-                    "\n   Disparará en: " + (delayMillis / 1000) + " segundos (" + (delayMillis / 60000) + " min)" +
-                    "\n   Snooze #" + event.getSnoozeCount() +
-                    "\n   ElapsedRealtime: " + triggerAtElapsed);
-
+            Log.d(TAG, "Snooze #" + event.getSnoozeCount() + " programado (" + delay / 1000 + "s)");
         } catch (SecurityException e) {
-            Log.e(TAG, "Permiso SCHEDULE_EXACT_ALARM denegado", e);
+            Log.e(TAG, "Error programando snooze", e);
         }
     }
 
-    // RequestCode único para cada snooze
+    private static int generateRequestCode(String eventId, int index) {
+        return (eventId.hashCode() * 100) + index;
+    }
+
+    private static int generateEventTimeRequestCode(String eventId) {
+        return eventId.hashCode() * 1000;
+    }
+
     private static int generateSnoozeRequestCode(String eventId, int snoozeNumber) {
         return (eventId.hashCode() * 2000) + snoozeNumber;
     }

@@ -10,9 +10,9 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QuerySnapshot;
 
-import java.util.UUID;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 import es.fdi.ucm.pad.notnotion.data.model.Note;
 import es.fdi.ucm.pad.notnotion.data.model.ContentBlock;
@@ -20,6 +20,7 @@ import es.fdi.ucm.pad.notnotion.data.model.ContentBlock;
 public class NotesManager {
 
     private static final String TAG = "NotesManager";
+
     private final FirebaseFirestore db;
     private final FirebaseAuth auth;
 
@@ -28,7 +29,6 @@ public class NotesManager {
         auth = FirebaseAuth.getInstance();
     }
 
-    // Devuelve la ruta base de las notas de una carpeta específica
     private String getNotesPath(@NonNull String folderId) {
         String uid = auth.getCurrentUser() != null ? auth.getCurrentUser().getUid() : null;
         if (uid == null) {
@@ -38,38 +38,36 @@ public class NotesManager {
         return "users/" + uid + "/folders/" + folderId + "/notes";
     }
 
-    // Inserta una nueva nota en una carpeta específica
-    public void addNote(@NonNull String title, @NonNull String content,
-                        @NonNull String folderId, boolean isFavorite) {
+    public void addNote(@NonNull String title,
+                        @NonNull String content,
+                        @NonNull String folderId,
+                        boolean isFavorite) {
+
         String path = getNotesPath(folderId);
         if (path == null) return;
 
         String noteId = UUID.randomUUID().toString();
 
-        // Convertimos el texto simple en un bloque de contenido
         List<ContentBlock> contentBlocks = new ArrayList<>();
 
-        // Si el contenido no está vacío, lo añadimos como un bloque de texto
         if (content != null && !content.trim().isEmpty()) {
             ContentBlock textBlock = ContentBlock.createTextBlock(
                     content,
-                    ContentBlock.STYLE_NORMAL,  // estilo normal por defecto
-                    16  // tamaño 16sp por defecto
+                    ContentBlock.STYLE_NORMAL,
+                    16
             );
             contentBlocks.add(textBlock);
         }
 
-        // Ahora creamos la nota con el nuevo constructor
         Note note = new Note(
-                noteId,             // id
-                title,              // título
-                folderId,           // carpeta padre
-                Timestamp.now(),    // fecha creación
-                Timestamp.now(),    // fecha actualización
-                isFavorite,         // es favorita
-                null,               // coverImageUrl
-                contentBlocks       // lista de bloques
-
+                noteId,
+                title,
+                folderId,
+                Timestamp.now(),
+                Timestamp.now(),
+                isFavorite,
+                null,
+                contentBlocks
         );
 
         db.collection(path)
@@ -79,12 +77,12 @@ public class NotesManager {
                 .addOnFailureListener(e -> Log.e(TAG, "Error al crear nota", e));
     }
 
-    // Inserta una nueva nota en una carpeta específica con bloques de contenido
     public void addNoteWithBlocks(@NonNull String title,
                                   String coverImageUrl,
                                   @NonNull List<ContentBlock> contentBlocks,
                                   @NonNull String folderId,
                                   boolean isFavorite) {
+
         String path = getNotesPath(folderId);
         if (path == null) return;
 
@@ -108,7 +106,6 @@ public class NotesManager {
                 .addOnFailureListener(e -> Log.e(TAG, "Error al crear nota", e));
     }
 
-    // Actualiza una nota existente
     public void updateNote(@NonNull Note note) {
         String path = getNotesPath(note.getFolderId());
         if (path == null) return;
@@ -122,7 +119,6 @@ public class NotesManager {
                 .addOnFailureListener(e -> Log.e(TAG, "Error al actualizar nota", e));
     }
 
-    // Elimina una nota
     public void deleteNote(@NonNull String folderId, @NonNull String noteId) {
         String path = getNotesPath(folderId);
         if (path == null) return;
@@ -134,7 +130,6 @@ public class NotesManager {
                 .addOnFailureListener(e -> Log.e(TAG, "Error al eliminar nota", e));
     }
 
-    // Obtiene todas las notas de una carpeta
     public void getNotesByFolder(@NonNull String folderId, OnSuccessListener<QuerySnapshot> listener) {
         String path = getNotesPath(folderId);
         if (path == null) return;
@@ -145,7 +140,6 @@ public class NotesManager {
                 .addOnFailureListener(e -> Log.e(TAG, "Error al obtener notas por carpeta", e));
     }
 
-    // Obtiene todas las notas favoritas de una carpeta
     public void getFavoriteNotes(@NonNull String folderId, OnSuccessListener<QuerySnapshot> listener) {
         String path = getNotesPath(folderId);
         if (path == null) return;
@@ -157,7 +151,6 @@ public class NotesManager {
                 .addOnFailureListener(e -> Log.e(TAG, "Error al obtener notas favoritas", e));
     }
 
-    // Obtiene todas las notas de todos los usuarios
     public void getAllNotes(OnSuccessListener<QuerySnapshot> listener) {
         String uid = auth.getCurrentUser() != null ? auth.getCurrentUser().getUid() : null;
         if (uid == null) {
@@ -165,7 +158,7 @@ public class NotesManager {
             return;
         }
 
-        db.collectionGroup("notes") // 🔹 busca en todas las subcolecciones llamadas "notes"
+        db.collectionGroup("notes")
                 .whereEqualTo("userId", uid)
                 .get()
                 .addOnSuccessListener(listener)
@@ -174,6 +167,7 @@ public class NotesManager {
 
     public void countNotesInFolder(@NonNull String folderId,
                                    @NonNull OnSuccessListener<Integer> listener) {
+
         String path = getNotesPath(folderId);
         if (path == null) return;
 

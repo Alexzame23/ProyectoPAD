@@ -22,7 +22,6 @@ public class ProfileActivity extends AppCompatActivity {
     private ImageView imgProfilePhoto;
     private TextView tvEmail, tvName, tvUid;
     private Button btnLogout, btnEditProfile;
-
     private UserProfileHelper profileHelper;
 
     @Override
@@ -30,13 +29,12 @@ public class ProfileActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_profile);
 
-        // --- UI ---
         imgProfilePhoto = findViewById(R.id.imgProfilePhoto);
-        tvEmail         = findViewById(R.id.tvEmail);
-        tvName          = findViewById(R.id.tvName);
-        tvUid           = findViewById(R.id.tvUid);
-        btnLogout       = findViewById(R.id.btnLogout);
-        btnEditProfile  = findViewById(R.id.btnEditProfile);
+        tvEmail = findViewById(R.id.tvEmail);
+        tvName = findViewById(R.id.tvName);
+        tvUid = findViewById(R.id.tvUid);
+        btnLogout = findViewById(R.id.btnLogout);
+        btnEditProfile = findViewById(R.id.btnEditProfile);
 
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
 
@@ -47,28 +45,21 @@ public class ProfileActivity extends AppCompatActivity {
             return;
         }
 
-        // Inicializar helper
         profileHelper = new UserProfileHelper();
 
-        // --- Cargar email + UID (solo vienen de Auth) ---
         tvEmail.setText("Correo: " + user.getEmail());
         tvUid.setText("UID: " + user.getUid());
 
-        // --- Cargar nombre + foto desde Firestore (fallback a Auth) ---
         profileHelper.applyToViews(tvName, imgProfilePhoto);
 
-        // Editar perfil
         btnEditProfile.setOnClickListener(v ->
                 startActivity(new Intent(this, ProfileEditActivity.class))
         );
 
-        // Logout
         btnLogout.setOnClickListener(v -> logout());
 
-        // Atrás
         findViewById(R.id.btnGoBackCalendar).setOnClickListener(v -> finish());
     }
-
 
     private void logout() {
         FirebaseAuth.getInstance().signOut();

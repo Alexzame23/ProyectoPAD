@@ -58,7 +58,7 @@ public class FirebaseDataLoader {
         db.collection("users")
                 .document(uid)
                 .collection("folders")
-                .whereEqualTo("parentId", parentFolderId)
+                .whereEqualTo("parentFolderId", parentFolderId)
                 .get()
                 .addOnSuccessListener(query -> {
                     List<Folder> result = new ArrayList<>();
@@ -68,7 +68,7 @@ public class FirebaseDataLoader {
                     listener.onSuccess(result);
                 });
     }
-    
+
     public void loadNotesInFolder(String folderId,
                                   OnSuccessListener<List<Note>> listener) {
 

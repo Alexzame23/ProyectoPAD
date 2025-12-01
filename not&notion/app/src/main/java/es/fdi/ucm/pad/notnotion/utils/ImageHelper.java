@@ -10,139 +10,76 @@ import android.util.Log;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 
-// Helper para convertir imágenes a Base64 y viceversa
 public class ImageHelper {
 
     private static final String TAG = "ImageHelper";
-    private static final int MAX_IMAGE_SIZE = 800; // Ancho/alto máximo en pixels
-    private static final int COMPRESSION_QUALITY = 70; // Calidad JPEG (0-100)
+    private static final int MAX_IMAGE_SIZE = 800;
+    private static final int COMPRESSION_QUALITY = 70;
 
-    /**
-     * Convierte una imagen URI a Base64 string
-     *
-     * @param context Contexto de la aplicación
-     * @param imageUri URI de la imagen seleccionada
-     * @return String en Base64 o null si hay error
-     */
     public static String convertImageToBase64(Context context, Uri imageUri) {
         try {
-            Log.d(TAG, "Iniciando conversión a Base64");
-            Log.d(TAG, "URI: " + imageUri);
-
-            // Leer la imagen desde la URI
             InputStream inputStream = context.getContentResolver().openInputStream(imageUri);
-            if (inputStream == null) {
-                Log.e(TAG, "No se pudo abrir el InputStream");
-                return null;
-            }
+            if (inputStream == null) return null;
 
-            // Decodificar a Bitmap
             Bitmap originalBitmap = BitmapFactory.decodeStream(inputStream);
             inputStream.close();
 
-            if (originalBitmap == null) {
-                Log.e(TAG, "No se pudo decodificar el Bitmap");
-                return null;
-            }
+            if (originalBitmap == null) return null;
 
-            Log.d(TAG, "Imagen original: " + originalBitmap.getWidth() + "x" + originalBitmap.getHeight());
-
-            // Redimensionar la imagen para que sea más pequeña
             Bitmap resizedBitmap = resizeBitmap(originalBitmap, MAX_IMAGE_SIZE);
 
-            Log.d(TAG, "Imagen redimensionada: " + resizedBitmap.getWidth() + "x" + resizedBitmap.getHeight());
+            ByteArrayOutputStream stream = new ByteArrayOutputStream();
+            resizedBitmap.compress(Bitmap.CompressFormat.JPEG, COMPRESSION_QUALITY, stream);
+            byte[] byteArray = stream.toByteArray();
 
-            // Comprimir a JPEG
-            ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-            resizedBitmap.compress(Bitmap.CompressFormat.JPEG, COMPRESSION_QUALITY, byteArrayOutputStream);
-            byte[] byteArray = byteArrayOutputStream.toByteArray();
+            String base64 = Base64.encodeToString(byteArray, Base64.DEFAULT);
 
-            // Convertir a Base64
-            String base64String = Base64.encodeToString(byteArray, Base64.DEFAULT);
-
-            // Calcular tamaño
-            int sizeKB = base64String.length() / 1024;
-            Log.d(TAG, "✓ Conversión exitosa. Tamaño: " + sizeKB + " KB");
-
-            if (sizeKB > 500) {
-                Log.w(TAG, "⚠️ ADVERTENCIA: Imagen grande (" + sizeKB + " KB). Puede causar problemas.");
-            }
-
-            // Liberar recursos
             originalBitmap.recycle();
             resizedBitmap.recycle();
-            byteArrayOutputStream.close();
+            stream.close();
 
-            return base64String;
+            return base64;
 
         } catch (Exception e) {
-            Log.e(TAG, "Error al convertir imagen a Base64", e);
+            Log.e(TAG, "Error convertImageToBase64", e);
             return null;
         }
     }
 
-    /**
-     * Convierte un string Base64 a Bitmap
-     *
-     * @param base64String String en Base64
-     * @return Bitmap o null si hay error
-     */
     public static Bitmap convertBase64ToBitmap(String base64String) {
         try {
-            if (base64String == null || base64String.isEmpty()) {
-                return null;
-            }
+            if (base64String == null || base64String.isEmpty()) return null;
 
-            // Decodificar Base64 a bytes
             byte[] decodedBytes = Base64.decode(base64String, Base64.DEFAULT);
-
-            // Convertir bytes a Bitmap
-            Bitmap bitmap = BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.length);
-
-            if (bitmap != null) {
-                Log.d(TAG, "✓ Bitmap decodificado: " + bitmap.getWidth() + "x" + bitmap.getHeight());
-            }
-
-            return bitmap;
+            return BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.length);
 
         } catch (Exception e) {
-            Log.e(TAG, "Error al convertir Base64 a Bitmap", e);
+            Log.e(TAG, "Error convertBase64ToBitmap", e);
             return null;
         }
     }
 
-    //Redimensiona un Bitmap manteniendo la proporción
-    private static Bitmap resizeBitmap(Bitmap originalBitmap, int maxSize) {
-        int width = originalBitmap.getWidth();
-        int height = originalBitmap.getHeight();
+    private static Bitmap resizeBitmap(Bitmap original, int maxSize) {
+        int width = original.getWidth();
+        int height = original.getHeight();
 
-        // Si ya es pequeña, no redimensionar
-        if (width <= maxSize && height <= maxSize) {
-            return originalBitmap;
-        }
+        if (width <= maxSize && height <= maxSize) return original;
 
-        // Calcular nuevo tamaño manteniendo proporción
-        float ratio = Math.min(
-                (float) maxSize / width,
-                (float) maxSize / height
-        );
+        float ratio = Math.min((float) maxSize / width, (float) maxSize / height);
 
         int newWidth = Math.round(width * ratio);
         int newHeight = Math.round(height * ratio);
 
-        return Bitmap.createScaledBitmap(originalBitmap, newWidth, newHeight, true);
+        return Bitmap.createScaledBitmap(original, newWidth, newHeight, true);
     }
 
-    //Verifica si un string es Base64 válido
     public static boolean isValidBase64(String str) {
-        if (str == null || str.isEmpty()) {
-            return false;
-        }
+        if (str == null || str.isEmpty()) return false;
 
         try {
             Base64.decode(str, Base64.DEFAULT);
             return true;
-        } catch (IllegalArgumentException e) {
+        } catch (Exception e) {
             return false;
         }
     }

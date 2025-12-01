@@ -8,7 +8,6 @@ import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.Timestamp;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
 
 import java.util.UUID;
@@ -34,9 +33,6 @@ public class CalendarEventsManager {
         return "users/" + uid + "/events";
     }
 
-    /**
-     * Crea un nuevo evento en el calendario del usuario
-     */
     public void addEvent(@NonNull String title, @NonNull String description,
                          @NonNull Timestamp startDate, @NonNull Timestamp endDate,
                          String noteId, int reminderMinutes,
@@ -68,9 +64,6 @@ public class CalendarEventsManager {
                 .addOnFailureListener(e -> Log.e("Firestore", "Error al crear evento", e));
     }
 
-    /**
-     * Actualiza un evento existente
-     */
     public void updateEvent(@NonNull CalendarEvent event, @NonNull Runnable onComplete) {
         String path = getUserEventsPath();
         if (path == null) return;
@@ -87,10 +80,6 @@ public class CalendarEventsManager {
                 .addOnFailureListener(e -> Log.e("Firestore", "Error al actualizar evento", e));
     }
 
-
-    /**
-     * Elimina un evento del calendario
-     */
     public void deleteEvent(@NonNull CalendarEvent event, @NonNull Runnable onComplete) {
         String path = getUserEventsPath();
         if (path == null) return;
@@ -105,9 +94,6 @@ public class CalendarEventsManager {
                 .addOnFailureListener(e -> Log.e("Firestore", "Error al eliminar evento", e));
     }
 
-    /**
-     * Obtiene todos los eventos del usuario
-     */
     public void getAllEvents(OnSuccessListener<QuerySnapshot> listener) {
         String path = getUserEventsPath();
         if (path == null) return;
@@ -118,9 +104,6 @@ public class CalendarEventsManager {
                 .addOnFailureListener(e -> Log.e("Firestore", "Error al obtener eventos", e));
     }
 
-    /**
-     * Obtiene los eventos vinculados a una nota específica
-     */
     public void getEventsByNote(String noteId, OnSuccessListener<QuerySnapshot> listener) {
         String path = getUserEventsPath();
         if (path == null) return;
@@ -142,8 +125,10 @@ public class CalendarEventsManager {
                 .addOnSuccessListener(doc -> {
                     if (doc.exists()) {
                         CalendarEvent ev = doc.toObject(CalendarEvent.class);
-                        ev.setId(doc.getId());
-                        listener.onSuccess(ev);
+                        if (ev != null) {
+                            ev.setId(doc.getId());
+                            listener.onSuccess(ev);
+                        }
                     } else {
                         Log.e("Firestore", "Evento no encontrado");
                     }
@@ -151,10 +136,6 @@ public class CalendarEventsManager {
                 .addOnFailureListener(e -> Log.e("Firestore", "Error al obtener evento", e));
     }
 
-
-    /**
-     * Obtiene los eventos futuros (posteriores a 'ahora')
-     */
     public void getUpcomingEvents(OnSuccessListener<QuerySnapshot> listener) {
         String path = getUserEventsPath();
         if (path == null) return;
@@ -166,9 +147,6 @@ public class CalendarEventsManager {
                 .addOnFailureListener(e -> Log.e("Firestore", "Error al obtener eventos futuros", e));
     }
 
-    /**
-     * Crea un evento y devuelve su ID (necesario para programar notificaciones)
-     */
     public void addEventWithNotifications(@NonNull CalendarEvent event, OnSuccessListener<String> listener) {
         String path = getUserEventsPath();
         if (path == null) return;

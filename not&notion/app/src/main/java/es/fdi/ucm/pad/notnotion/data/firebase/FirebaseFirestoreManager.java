@@ -9,12 +9,10 @@ import com.google.firebase.Timestamp;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.DocumentReference;
-import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.UUID;
 
 import es.fdi.ucm.pad.notnotion.data.model.Folder;
 import es.fdi.ucm.pad.notnotion.data.model.User;
@@ -22,6 +20,7 @@ import es.fdi.ucm.pad.notnotion.data.model.User;
 public class FirebaseFirestoreManager {
 
     private static final String TAG = "FirestoreManager";
+
     private final FirebaseFirestore db;
     private final FirebaseAuth auth;
 
@@ -35,13 +34,8 @@ public class FirebaseFirestoreManager {
         return user != null ? user.getUid() : null;
     }
 
-    /**
-     * Guarda el usuario en Firestore. Si ya existe, lo actualiza.
-     */
     public void saveOrUpdateUser(@NonNull FirebaseUser firebaseUser) {
         String uid = firebaseUser.getUid();
-
-        // Crear o actualizar usuario
         DocumentReference userRef = db.collection("users").document(uid);
 
         Map<String, Object> data = new HashMap<>();
@@ -49,7 +43,6 @@ public class FirebaseFirestoreManager {
         data.put("username", firebaseUser.getDisplayName() != null ? firebaseUser.getDisplayName() : "Sin nombre");
         data.put("lastLogin", Timestamp.now());
 
-        // Si es la primera vez, añadimos createdAt
         userRef.get().addOnSuccessListener(document -> {
             if (!document.exists()) {
                 data.put("createdAt", Timestamp.now());
@@ -67,14 +60,11 @@ public class FirebaseFirestoreManager {
         });
     }
 
-    /**
-     * Obtiene los datos del usuario autenticado
-     */
     public void getCurrentUserData(OnSuccessListener<User> listener) {
         String uid = getUserId();
         if (uid == null) {
             Log.e(TAG, "No hay usuario autenticado");
-            listener.onSuccess(null); // ← evitar bloqueo
+            listener.onSuccess(null);
             return;
         }
 
@@ -86,18 +76,15 @@ public class FirebaseFirestoreManager {
                         listener.onSuccess(user);
                     } else {
                         Log.w(TAG, "El documento del usuario no existe");
-                        listener.onSuccess(null); // ← MUY IMPORTANTE
+                        listener.onSuccess(null);
                     }
                 })
                 .addOnFailureListener(e -> {
                     Log.e(TAG, "Error al obtener usuario", e);
-                    listener.onSuccess(null); // ← evitar bloqueo
+                    listener.onSuccess(null);
                 });
     }
 
-    /**
-     * Actualiza las preferencias del usuario
-     */
     public void updateUserPreferences(String language, String theme) {
         String uid = getUserId();
         if (uid == null) {
@@ -133,19 +120,21 @@ public class FirebaseFirestoreManager {
         data.put("preferences", preferences);
 
         userRef.set(data).addOnSuccessListener(aVoid -> {
-
             String folderId = "root";
 
             Folder rootFolder = new Folder(
-                    folderId, "Root", "None",
-                    Timestamp.now(), Timestamp.now(), 0
+                    folderId,
+                    "Root",
+                    "None",
+                    Timestamp.now(),
+                    Timestamp.now(),
+                    0
             );
 
             userRef.collection("folders")
                     .document(folderId)
                     .set(rootFolder)
                     .addOnSuccessListener(aVoid2 -> {
-
                         NotesManager notesManager = new NotesManager();
                         notesManager.addNote(
                                 "Nota de ejemplo",
@@ -154,11 +143,10 @@ public class FirebaseFirestoreManager {
                                 false
                         );
 
-                        Log.d(TAG, "✓ Usuario, carpeta root y nota inicial creados");
+                        Log.d(TAG, "Usuario, carpeta root y nota inicial creados");
                         onComplete.run();
                     })
                     .addOnFailureListener(e -> Log.e(TAG, "Error creando carpeta", e));
         });
     }
-
 }

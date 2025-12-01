@@ -35,7 +35,6 @@ public class RegisterActivity extends AppCompatActivity {
 
         mAuth = FirebaseAuth.getInstance();
 
-        // UI
         nameInput = findViewById(R.id.name_input);
         emailInput = findViewById(R.id.email_input);
         passwordInput = findViewById(R.id.password_input);
@@ -69,47 +68,46 @@ public class RegisterActivity extends AppCompatActivity {
 
         mAuth.createUserWithEmailAndPassword(email, password)
                 .addOnCompleteListener(this, task -> {
-                    if (task.isSuccessful()) {
-
-                        FirebaseUser user = mAuth.getCurrentUser();
-                        FirebaseFirestoreManager firestore = new FirebaseFirestoreManager();
-
-                        // 🔥 ESPERAR a que Firestore termine antes de pasar a Main
-                        firestore.initializeUserStructure(user, () -> {
-
-                            // Actualizar nombre visual del perfil de FirebaseAuth
-                            if (user != null) {
-                                user.updateProfile(new UserProfileChangeRequest.Builder()
-                                        .setDisplayName(name)
-                                        .build());
-                            }
-
-                            Toast.makeText(this, "Cuenta creada correctamente", Toast.LENGTH_SHORT).show();
-                            goToMainActivity();
-                        });
-
-                    } else {
-                        Exception e = task.getException();
-                        if (e instanceof FirebaseAuthUserCollisionException) {
-                            Toast.makeText(this, "Ya existe una cuenta con ese correo", Toast.LENGTH_LONG).show();
-                        } else if (e instanceof FirebaseAuthInvalidCredentialsException) {
-                            Toast.makeText(this, "Error: contraseña mínima de 6 caracteres", Toast.LENGTH_SHORT).show();
-                        } else {
-                            Toast.makeText(this, "Error al crear la cuenta: " + e.getMessage(), Toast.LENGTH_LONG).show();
-                        }
+                    if (!task.isSuccessful()) {
+                        handleRegisterError(task.getException());
+                        return;
                     }
+
+                    FirebaseUser user = mAuth.getCurrentUser();
+                    if (user == null) return;
+
+                    FirebaseFirestoreManager firestore = new FirebaseFirestoreManager();
+
+                    firestore.initializeUserStructure(user, () -> {
+                        user.updateProfile(
+                                new UserProfileChangeRequest.Builder()
+                                        .setDisplayName(name)
+                                        .build()
+                        );
+
+                        Toast.makeText(this, "Cuenta creada correctamente", Toast.LENGTH_SHORT).show();
+                        goToMainActivity();
+                    });
                 });
     }
 
+    private void handleRegisterError(Exception e) {
+        if (e instanceof FirebaseAuthUserCollisionException) {
+            Toast.makeText(this, "Ya existe una cuenta con ese correo", Toast.LENGTH_LONG).show();
+        } else if (e instanceof FirebaseAuthInvalidCredentialsException) {
+            Toast.makeText(this, "La contraseña debe tener al menos 6 caracteres", Toast.LENGTH_SHORT).show();
+        } else {
+            Toast.makeText(this, "Error al crear la cuenta: " + e.getMessage(), Toast.LENGTH_LONG).show();
+        }
+    }
+
     private void goToLoginActivity() {
-        Intent intent = new Intent(RegisterActivity.this, LoginActivity.class);
-        startActivity(intent);
+        startActivity(new Intent(this, LoginActivity.class));
         finish();
     }
 
     private void goToMainActivity() {
-        Intent intent = new Intent(RegisterActivity.this, MainActivity.class);
-        startActivity(intent);
+        startActivity(new Intent(this, MainActivity.class));
         finish();
     }
 
@@ -119,14 +117,13 @@ public class RegisterActivity extends AppCompatActivity {
     }
 
     private void showLanguageDialog() {
-        final String[] languages = {"Español", "English"};
-        final String[] codes = {"es", "en"};
+        String[] languages = {"Español", "English"};
+        String[] codes = {"es", "en"};
 
         new android.app.AlertDialog.Builder(this)
                 .setTitle(getString(R.string.select_language))
                 .setItems(languages, (dialog, which) -> {
-                    String selectedLang = codes[which];
-                    es.fdi.ucm.pad.notnotion.utils.LocaleHelper.setLocale(this, selectedLang);
+                    es.fdi.ucm.pad.notnotion.utils.LocaleHelper.setLocale(this, codes[which]);
                     recreate();
                 })
                 .show();

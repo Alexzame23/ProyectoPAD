@@ -30,48 +30,30 @@ import es.fdi.ucm.pad.notnotion.data.firebase.CalendarEventsManager;
 import es.fdi.ucm.pad.notnotion.data.model.CalendarEvent;
 import es.fdi.ucm.pad.notnotion.utils.NotificationHelper;
 
-/**
- * Actividad de pantalla completa que se muestra cuando suena una alarma
- *
- * Características:
- * - Se muestra sobre la pantalla de bloqueo
- * - Pantalla completa inmersiva
- * - Reproduce sonido de alarma en bucle
- * - Vibración continua
- * - Botones grandes para posponer y descartar
- */
 public class AlarmFullScreenActivity extends AppCompatActivity {
 
     private static final String TAG = "AlarmFullScreen";
 
-    private TextView tvEventTitle;
-    private TextView tvEventDescription;
-    private TextView tvEventTime;
-    private TextView tvSnoozeInfo;
-    private Button btnSnooze;
-    private Button btnDismiss;
+    private TextView tvEventTitle, tvEventDescription, tvEventTime, tvSnoozeInfo;
+    private Button btnSnooze, btnDismiss;
 
     private MediaPlayer mediaPlayer;
     private Vibrator vibrator;
-    private boolean isVibrating = false;
+    private boolean isVibrating;
 
     private String eventId;
     private CalendarEvent currentEvent;
     private CalendarEventsManager eventsManager;
 
-    private SimpleDateFormat timeFormat;
-    private SimpleDateFormat dateFormat;
+    private SimpleDateFormat timeFormat, dateFormat;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // ✅ Configurar para mostrarse sobre pantalla de bloqueo
         setupWindowFlags();
-
         setContentView(R.layout.activity_alarm_fullscreen);
 
-        // Formatos de fecha
         timeFormat = new SimpleDateFormat("HH:mm", Locale.getDefault());
         dateFormat = new SimpleDateFormat("dd MMM yyyy", Locale.getDefault());
 
@@ -82,33 +64,24 @@ public class AlarmFullScreenActivity extends AppCompatActivity {
         startAlarmSoundAndVibration();
     }
 
-    /**
-     * Configura las flags de la ventana para mostrar sobre pantalla de bloqueo
-     */
     private void setupWindowFlags() {
-        // Actividad de pantalla completa
         requestWindowFeature(Window.FEATURE_NO_TITLE);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
-            // Android 8.1+
             setShowWhenLocked(true);
             setTurnScreenOn(true);
 
-            KeyguardManager keyguardManager = (KeyguardManager) getSystemService(Context.KEYGUARD_SERVICE);
-            if (keyguardManager != null) {
-                keyguardManager.requestDismissKeyguard(this, null);
-            }
+            KeyguardManager km = (KeyguardManager) getSystemService(Context.KEYGUARD_SERVICE);
+            if (km != null) km.requestDismissKeyguard(this, null);
         } else {
-            // Android 8.0 y anteriores
-            Window window = getWindow();
-            window.addFlags(WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED |
+            Window w = getWindow();
+            w.addFlags(WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED |
                     WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD |
                     WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON |
                     WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON |
                     WindowManager.LayoutParams.FLAG_ALLOW_LOCK_WHILE_SCREEN_ON);
         }
 
-        // Pantalla completa inmersiva
         getWindow().getDecorView().setSystemUiVisibility(
                 View.SYSTEM_UI_FLAG_FULLSCREEN |
                         View.SYSTEM_UI_FLAG_HIDE_NAVIGATION |
@@ -124,6 +97,7 @@ public class AlarmFullScreenActivity extends AppCompatActivity {
         tvEventDescription = findViewById(R.id.tvAlarmDescription);
         tvEventTime = findViewById(R.id.tvAlarmTime);
         tvSnoozeInfo = findViewById(R.id.tvAlarmSnoozeInfo);
+
         btnSnooze = findViewById(R.id.btnAlarmSnooze);
         btnDismiss = findViewById(R.id.btnAlarmDismiss);
 
@@ -132,210 +106,149 @@ public class AlarmFullScreenActivity extends AppCompatActivity {
     }
 
     private void loadEventData() {
-        eventId = getIntent().getStringExtra("eventId");
-        String eventTitle = getIntent().getStringExtra("eventTitle");
-        String eventDescription = getIntent().getStringExtra("eventDescription");
-        long eventTimeMillis = getIntent().getLongExtra("eventTimeMillis", 0);
-        boolean isSnoozed = getIntent().getBooleanExtra("isSnoozed", false);
+        Intent intent = getIntent();
 
-        if (eventId == null || eventTitle == null) {
-            Log.e(TAG, "Datos del evento incompletos");
+        eventId = intent.getStringExtra("eventId");
+        String title = intent.getStringExtra("eventTitle");
+        String description = intent.getStringExtra("eventDescription");
+        long eventTimeMillis = intent.getLongExtra("eventTimeMillis", 0);
+        boolean isSnoozed = intent.getBooleanExtra("isSnoozed", false);
+
+        if (eventId == null || title == null) {
             finish();
             return;
         }
 
-        // Mostrar información básica inmediatamente
-        tvEventTitle.setText(eventTitle);
+        tvEventTitle.setText(title);
 
-        if (eventDescription != null && !eventDescription.isEmpty()) {
-            tvEventDescription.setText(eventDescription);
+        if (description != null && !description.isEmpty()) {
+            tvEventDescription.setText(description);
             tvEventDescription.setVisibility(View.VISIBLE);
         } else {
             tvEventDescription.setVisibility(View.GONE);
         }
 
         if (eventTimeMillis > 0) {
-            Date eventDate = new Date(eventTimeMillis);
-            String timeStr = timeFormat.format(eventDate);
-            String dateStr = dateFormat.format(eventDate);
-            tvEventTime.setText(timeStr + " • " + dateStr);
+            Date date = new Date(eventTimeMillis);
+            tvEventTime.setText(timeFormat.format(date) + " • " + dateFormat.format(date));
         }
 
-        // Indicador de pospuesto
-        if (isSnoozed) {
-            tvSnoozeInfo.setText("🔁 Alarma pospuesta");
-            tvSnoozeInfo.setVisibility(View.VISIBLE);
-        } else {
-            tvSnoozeInfo.setVisibility(View.GONE);
-        }
+        tvSnoozeInfo.setVisibility(isSnoozed ? View.VISIBLE : View.GONE);
+        if (isSnoozed) tvSnoozeInfo.setText("🔁 Alarma pospuesta");
 
-        // Cargar evento completo desde Firebase para info adicional
         eventsManager.getEventById(eventId, event -> {
-            if (event != null) {
-                currentEvent = event;
+            currentEvent = event;
+            if (event == null) return;
 
-                // Actualizar UI si hay más información
-                if (event.getSnoozeCount() > 0) {
-                    tvSnoozeInfo.setText("🔁 Pospuesto " + event.getSnoozeCount() +
-                            " vez" + (event.getSnoozeCount() > 1 ? "es" : ""));
-                    tvSnoozeInfo.setVisibility(View.VISIBLE);
-                }
+            if (event.getSnoozeCount() > 0) {
+                tvSnoozeInfo.setVisibility(View.VISIBLE);
+                tvSnoozeInfo.setText(
+                        "🔁 Pospuesto " + event.getSnoozeCount() +
+                                " vez" + (event.getSnoozeCount() > 1 ? "es" : "")
+                );
+            }
 
-                // Verificar si puede posponer
-                if (!event.canSnooze()) {
-                    btnSnooze.setEnabled(false);
-                    btnSnooze.setText("Límite alcanzado");
-                }
+            if (!event.canSnooze()) {
+                btnSnooze.setEnabled(false);
+                btnSnooze.setText("Límite alcanzado");
             }
         });
     }
 
-    /**
-     * Inicia el sonido de alarma y la vibración
-     */
     private void startAlarmSoundAndVibration() {
         String soundType = getIntent().getStringExtra("soundType");
 
-        // Reproducir sonido
         if (!"silent".equals(soundType)) {
             try {
-                Uri alarmUri;
-
-                if ("alarm".equals(soundType)) {
-                    alarmUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM);
-                } else {
-                    alarmUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
-                }
+                Uri uri = "alarm".equals(soundType)
+                        ? RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
+                        : RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
 
                 mediaPlayer = new MediaPlayer();
-                mediaPlayer.setDataSource(this, alarmUri);
+                mediaPlayer.setDataSource(this, uri);
 
-                // Configurar como alarma
-                AudioAttributes attributes = new AudioAttributes.Builder()
+                AudioAttributes attr = new AudioAttributes.Builder()
                         .setUsage(AudioAttributes.USAGE_ALARM)
                         .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
                         .build();
-                mediaPlayer.setAudioAttributes(attributes);
+                mediaPlayer.setAudioAttributes(attr);
 
-                // Volumen máximo
-                AudioManager audioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
-                if (audioManager != null) {
-                    int maxVolume = audioManager.getStreamMaxVolume(AudioManager.STREAM_ALARM);
-                    audioManager.setStreamVolume(AudioManager.STREAM_ALARM, maxVolume, 0);
+                AudioManager am = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
+                if (am != null) {
+                    int max = am.getStreamMaxVolume(AudioManager.STREAM_ALARM);
+                    am.setStreamVolume(AudioManager.STREAM_ALARM, max, 0);
                 }
 
-                // Reproducir en bucle
                 mediaPlayer.setLooping(true);
                 mediaPlayer.prepare();
                 mediaPlayer.start();
 
-                Log.d(TAG, "✅ Sonido de alarma iniciado");
-
             } catch (Exception e) {
-                Log.e(TAG, "Error al reproducir sonido", e);
+                Log.e(TAG, "Error reproduciendo sonido", e);
             }
         }
 
-        // Iniciar vibración
         vibrator = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
         if (vibrator != null && vibrator.hasVibrator()) {
-            long[] pattern = {0, 1000, 500, 1000, 500, 1000}; // Patrón de vibración
+            long[] pattern = {0, 1000, 500, 1000, 500, 1000};
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                VibrationEffect effect = VibrationEffect.createWaveform(pattern, 0); // 0 = repetir
-                vibrator.vibrate(effect);
+                vibrator.vibrate(VibrationEffect.createWaveform(pattern, 0));
             } else {
                 vibrator.vibrate(pattern, 0);
             }
 
             isVibrating = true;
-            Log.d(TAG, "✅ Vibración iniciada");
         }
     }
 
-    /**
-     * Detiene el sonido y la vibración
-     */
     private void stopAlarmSoundAndVibration() {
-        // Detener sonido
         if (mediaPlayer != null) {
             try {
-                if (mediaPlayer.isPlaying()) {
-                    mediaPlayer.stop();
-                }
+                if (mediaPlayer.isPlaying()) mediaPlayer.stop();
                 mediaPlayer.release();
-                mediaPlayer = null;
-                Log.d(TAG, "Sonido detenido");
-            } catch (Exception e) {
-                Log.e(TAG, "Error al detener sonido", e);
-            }
+            } catch (Exception ignored) {}
+            mediaPlayer = null;
         }
 
-        // Detener vibración
         if (vibrator != null && isVibrating) {
             vibrator.cancel();
             isVibrating = false;
-            Log.d(TAG, "Vibración detenida");
         }
     }
 
-    /**
-     * Maneja el postponimiento de la alarma
-     */
     private void handleSnooze() {
-        Log.d(TAG, "Usuario pulsó POSPONER");
-
-        // Cancelar notificación actual
         NotificationHelper.cancelEventNotifications(this, eventId);
 
         if (currentEvent != null) {
-            // Verificar si puede posponer
             if (!currentEvent.canSnooze()) {
-                NotificationHelper.showToast(this,
-                        "Has alcanzado el límite de postponimientos");
+                NotificationHelper.showToast(this, "Has alcanzado el límite de postponimientos");
                 handleDismiss();
                 return;
             }
 
-            // Incrementar contador
             currentEvent.incrementSnoozeCount();
+            long snoozeTime = System.currentTimeMillis() + (5 * 60 * 1000L);
 
-            // Calcular tiempo de snooze (5 minutos)
-            long snoozeTimeMillis = System.currentTimeMillis() + (5 * 60 * 1000L);
+            eventsManager.updateEvent(currentEvent, () ->
+                    NotificationScheduler.scheduleSnoozeAlarm(this, currentEvent, snoozeTime)
+            );
 
-            // Actualizar en Firebase
-            eventsManager.updateEvent(currentEvent, () -> {
-                // Programar nueva alarma
-                NotificationScheduler.scheduleSnoozeAlarm(this, currentEvent, snoozeTimeMillis);
-
-                NotificationHelper.showToast(this, "⏰ Alarma pospuesta 5 minutos");
-                Log.d(TAG, "Alarma pospuesta correctamente");
-            });
+            NotificationHelper.showToast(this, "⏰ Alarma pospuesta 5 minutos");
         }
 
-        // Cerrar actividad
         stopAlarmSoundAndVibration();
         finish();
     }
 
-    /**
-     * Maneja el descarte de la alarma
-     */
     private void handleDismiss() {
-        Log.d(TAG, "Usuario pulsó DESCARTAR");
-
-        // Cancelar notificación
         NotificationHelper.cancelEventNotifications(this, eventId);
 
-        // Resetear contador de snooze si existe el evento
         if (currentEvent != null && currentEvent.getSnoozeCount() > 0) {
             currentEvent.resetSnoozeCount();
-            eventsManager.updateEvent(currentEvent, () -> {
-                Log.d(TAG, "Contador de snooze reseteado");
-            });
+            eventsManager.updateEvent(currentEvent, () -> {});
         }
 
-        // Cerrar actividad
         stopAlarmSoundAndVibration();
         finish();
     }
@@ -348,7 +261,6 @@ public class AlarmFullScreenActivity extends AppCompatActivity {
 
     @Override
     public void onBackPressed() {
-        // Evitar que se cierre con el botón atrás accidentalmente
-        // El usuario debe usar los botones de la interfaz
+        // Deshabilitado para evitar cierre accidental
     }
 }

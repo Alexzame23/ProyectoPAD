@@ -2,7 +2,6 @@ package es.fdi.ucm.pad.notnotion.ui.Fragments;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -29,7 +28,6 @@ public class CalendarFragment extends Fragment {
 
     private CalendarView calendarView;
     private long selectedDateMillis;
-
     private RecyclerView recyclerEvents;
     private EventAdapter eventAdapter;
     private CalendarEventsManager eventsManager;
@@ -48,55 +46,33 @@ public class CalendarFragment extends Fragment {
 
         super.onViewCreated(view, savedInstanceState);
 
-        // --- UI ---
         calendarView = view.findViewById(R.id.calendarView);
         View btnAddEvent = view.findViewById(R.id.btnAddEvent);
         recyclerEvents = view.findViewById(R.id.recyclerEvents);
 
         recyclerEvents.setLayoutManager(new androidx.recyclerview.widget.LinearLayoutManager(getContext()));
 
-        // --- ADAPTER ---
         eventAdapter = new EventAdapter();
         recyclerEvents.setAdapter(eventAdapter);
 
         eventAdapter.setOnEventClickListener(event -> {
-
-            if (event.getNoteId() != null && !event.getNoteId().isEmpty()) {
-                // 🔥 ABRIR NOTA DIRECTAMENTE
-                Intent intent = new Intent(getContext(), EditNoteActivity.class);
-                intent.putExtra("noteId", event.getNoteId());
-                startActivity(intent);
-                return;
-            }
-
-            // Si no tiene nota → abrir editor de eventos normal
             Intent intent = new Intent(getContext(), EventEditActivity.class);
             intent.putExtra("eventId", event.getId());
             startActivity(intent);
         });
 
-
-
-        // --- FIRESTORE MANAGER ---
         eventsManager = new CalendarEventsManager();
 
-        // --- FECHA INICIAL ---
         selectedDateMillis = calendarView.getDate();
         loadEventsForThisDay(selectedDateMillis);
 
-        // --- CAMBIO DE FECHA ---
         calendarView.setOnDateChangeListener((v, year, month, dayOfMonth) -> {
-
             Calendar cal = Calendar.getInstance();
             cal.set(year, month, dayOfMonth, 0, 0, 0);
             selectedDateMillis = cal.getTimeInMillis();
-
-            Log.d("CalendarFragment", "Nueva fecha: " + dayOfMonth + "/" + (month + 1) + "/" + year);
-
             loadEventsForThisDay(selectedDateMillis);
         });
 
-        // --- BOTÓN AÑADIR EVENTO ---
         btnAddEvent.setOnClickListener(v -> {
             Intent intent = new Intent(getContext(), EventEditActivity.class);
             intent.putExtra("selectedDate", selectedDateMillis);
@@ -107,20 +83,12 @@ public class CalendarFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
-
-        // Recargar eventos cuando vuelves al calendario
         if (selectedDateMillis != 0) {
             loadEventsForThisDay(selectedDateMillis);
         }
     }
 
-    // ============================================================================
-    //      CARGAR EVENTOS DESDE FIRESTORE FILTRADOS POR FECHA SELECCIONADA
-    // ============================================================================
-
     private void loadEventsForThisDay(long millis) {
-
-        // Inicio del día
         Calendar start = Calendar.getInstance();
         start.setTimeInMillis(millis);
         start.set(Calendar.HOUR_OF_DAY, 0);
@@ -129,7 +97,6 @@ public class CalendarFragment extends Fragment {
 
         long dayStart = start.getTimeInMillis();
 
-        // Fin del día
         Calendar end = Calendar.getInstance();
         end.setTimeInMillis(millis);
         end.set(Calendar.HOUR_OF_DAY, 23);
@@ -138,26 +105,20 @@ public class CalendarFragment extends Fragment {
 
         long dayEnd = end.getTimeInMillis();
 
-        Log.d("CalendarFragment", "Cargando eventos entre: " + dayStart + " y " + dayEnd);
-
         eventsManager.getAllEvents(query -> {
-
-            List<CalendarEvent> matchingEvents = new ArrayList<>();
+            List<CalendarEvent> events = new ArrayList<>();
 
             for (QueryDocumentSnapshot doc : query) {
                 CalendarEvent ev = doc.toObject(CalendarEvent.class);
                 ev.setId(doc.getId());
 
                 long time = ev.getStartDate().toDate().getTime();
-
                 if (time >= dayStart && time <= dayEnd) {
-                    matchingEvents.add(ev);
+                    events.add(ev);
                 }
             }
 
-            Log.d("CalendarFragment", "EVENTOS ENCONTRADOS PARA ESTE DÍA: " + matchingEvents.size());
-
-            eventAdapter.setEvents(matchingEvents);
+            eventAdapter.setEvents(events);
         });
     }
 }
