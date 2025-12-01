@@ -61,7 +61,12 @@ public class LoginActivity extends AppCompatActivity {
         btnLanguage.setOnClickListener(v -> showLanguageDialog());
 
         TextView goToRegister = findViewById(R.id.new_user);
-        goToRegister.setOnClickListener(v -> goToRegisterActivity());
+        goToRegister.setOnClickListener(v -> {
+            checkInternetConnection(
+                    () -> goToRegisterActivity(),
+                    () -> Toast.makeText(this, "No hay conexión a Internet", Toast.LENGTH_LONG).show()
+            );
+        });
 
         emailField = findViewById(R.id.email);
         passwordField = findViewById(R.id.password);
@@ -177,5 +182,20 @@ public class LoginActivity extends AppCompatActivity {
                     recreate();
                 })
                 .show();
+    }
+
+    private void checkInternetConnection(Runnable onSuccess, Runnable onTimeout) {
+        new Thread(() -> {
+            try {
+                java.net.InetAddress ipAddr = java.net.InetAddress.getByName("8.8.8.8");
+                if (!ipAddr.equals("")) {
+                    runOnUiThread(onSuccess);
+                }
+            } catch (Exception e) {
+                runOnUiThread(onTimeout);
+            }
+        }).start();
+
+        new android.os.Handler(getMainLooper()).postDelayed(onTimeout, 5000);
     }
 }

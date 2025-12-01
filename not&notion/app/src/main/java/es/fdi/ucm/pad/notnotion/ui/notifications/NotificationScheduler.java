@@ -12,6 +12,7 @@ import java.util.List;
 
 import es.fdi.ucm.pad.notnotion.data.model.CalendarEvent;
 import es.fdi.ucm.pad.notnotion.utils.NotificationHelper;
+import es.fdi.ucm.pad.notnotion.ui.events.EventEditActivity;
 
 public class NotificationScheduler {
 
@@ -97,6 +98,7 @@ public class NotificationScheduler {
         AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
         if (alarmManager == null) return;
 
+        // Intent principal que se dispara cuando se activa la alarma
         Intent intent = new Intent(context, NotificationReceiver.class);
         intent.putExtra("eventId", event.getId());
         intent.putExtra("eventTitle", event.getTitle());
@@ -104,27 +106,57 @@ public class NotificationScheduler {
         intent.putExtra("eventTimeMillis", eventTimeMillis);
         intent.putExtra("soundType", event.getEventTimeNotificationSound());
         intent.putExtra("isEventTimeAlarm", true);
+        intent.putExtra("isSnoozed", false);
 
-        PendingIntent pi = PendingIntent.getBroadcast(
+        // Usa tu propio generador de request codes
+        int requestCode = generateEventTimeRequestCode(event.getId());
+
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(
                 context,
-                generateEventTimeRequestCode(event.getId()),
+                requestCode,
                 intent,
                 PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
         );
 
         try {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                AlarmManager.AlarmClockInfo alarmInfo = new AlarmManager.AlarmClockInfo(eventTimeMillis, pi);
-                alarmManager.setAlarmClock(alarmInfo, pi);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+
+                // Intent separado para abrir el evento al pulsar la alarma desde pantalla bloqueada
+                Intent showIntent = new Intent(context, EventEditActivity.class);
+                showIntent.putExtra("eventId", event.getId());
+                showIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+
+                PendingIntent showPendingIntent = PendingIntent.getActivity(
+                        context,
+                        requestCode + 1000, // Evita colisiones
+                        showIntent,
+                        PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
+                );
+
+                AlarmManager.AlarmClockInfo alarmClockInfo =
+                        new AlarmManager.AlarmClockInfo(eventTimeMillis, showPendingIntent);
+
+                alarmManager.setAlarmClock(alarmClockInfo, pendingIntent);
+
+                Log.d(TAG, "ALARMA programada con setAlarmClock: " + event.getTitle() +
+                        " Hora: " + new java.util.Date(eventTimeMillis));
+
             } else {
-                alarmManager.setExact(AlarmManager.RTC_WAKEUP, eventTimeMillis, pi);
+
+                alarmManager.setExact(
+                        AlarmManager.RTC_WAKEUP,
+                        eventTimeMillis,
+                        pendingIntent
+                );
+
+                Log.d(TAG, "ALARMA programada (API < 21) para " + event.getTitle());
             }
 
-            Log.d(TAG, "Alarma del momento programada");
         } catch (SecurityException e) {
             Log.e(TAG, "Error programando alarma del evento", e);
         }
     }
+
 
     public static void cancelNotifications(Context context, CalendarEvent event) {
         AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);

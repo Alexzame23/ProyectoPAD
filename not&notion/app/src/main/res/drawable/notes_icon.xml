@@ -1,0 +1,30 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="50dp"
+    android:height="50dp"
+    android:viewportWidth="960"
+    android:viewportHeight="960">
+
+    <!-- Cuerpo del cuaderno -->
+    <path
+        android:fillColor="#DDBA99"
+        android:pathData="M240,160h480q33,0 56.5,23.5T800,240v480q0,33 -23.5,56.5T720,800H240q-33,0 -56.5,-23.5T160,720V240q0,-33 23.5,-56.5T240,160Z"/>
+
+    <!-- Borde del cuaderno -->
+    <path
+        android:fillColor="@color/transparent"
+        android:strokeColor="#8B5A2B"
+        android:strokeWidth="20"
+        android:pathData="M240,160h480q33,0 56.5,23.5T800,240v480q0,33 -23.5,56.5T720,800H240q-33,0 -56.5,-23.5T160,720V240q0,-33 23.5,-56.5T240,160Z"/>
+
+    <!-- Líneas horizontales del mismo tamaño -->
+    <path android:fillColor="#FDD87C" android:pathData="M320,320h320v40H320z"/>
+    <path android:fillColor="#FDD87C" android:pathData="M320,430h320v40H320z"/>
+    <path android:fillColor="#FDD87C" android:pathData="M320,540h320v40H320z"/>
+
+    <!-- Anillas arriba, 4 y perfectamente centradas -->
+    <path android:fillColor="#8B5A2B" android:pathData="M273,160a40,40 0 1 1 -80,0 40,40 0 0 1 80,0z"/>
+    <path android:fillColor="#8B5A2B" android:pathData="M411,160a40,40 0 1 1 -80,0 40,40 0 0 1 80,0z"/>
+    <path android:fillColor="#8B5A2B" android:pathData="M549,160a40,40 0 1 1 -80,0 40,40 0 0 1 80,0z"/>
+    <path android:fillColor="#8B5A2B" android:pathData="M687,160a40,40 0 1 1 -80,0 40,40 0 0 1 80,0z"/>
+
+</vector>
