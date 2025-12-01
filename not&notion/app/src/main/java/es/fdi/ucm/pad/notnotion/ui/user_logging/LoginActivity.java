@@ -85,7 +85,7 @@ public class LoginActivity extends AppCompatActivity {
             }
 
             checkInternetConnection(
-                    () -> {
+                    () -> { // ✔ Hay internet → iniciar sesión
                         mAuth.signInWithEmailAndPassword(email, password)
                                 .addOnCompleteListener(this, task -> {
                                     if (task.isSuccessful()) {
@@ -96,10 +96,12 @@ public class LoginActivity extends AppCompatActivity {
                                     }
                                 });
                     },
-
-                    () -> Toast.makeText(this, "No hay conexión a Internet", Toast.LENGTH_LONG).show()
+                    () -> {
+                        Toast.makeText(this, "No hay conexión a Internet", Toast.LENGTH_LONG).show();
+                    }
             );
         });
+
 
         googleButton.setOnClickListener(v ->
                 checkInternetConnection(
@@ -207,17 +209,33 @@ public class LoginActivity extends AppCompatActivity {
 
 
     private void checkInternetConnection(Runnable onSuccess, Runnable onTimeout) {
-        new Thread(() -> {
+
+        java.util.concurrent.atomic.AtomicBoolean completed = new java.util.concurrent.atomic.AtomicBoolean(false);
+
+        Thread thread = new Thread(() -> {
             try {
+                // Intenta resolver Google DNS
                 java.net.InetAddress ipAddr = java.net.InetAddress.getByName("8.8.8.8");
+
                 if (!ipAddr.equals("")) {
-                    runOnUiThread(onSuccess);
+                    if (completed.compareAndSet(false, true)) {
+                        runOnUiThread(onSuccess);
+                    }
+                    return;
                 }
-            } catch (Exception e) {
+            } catch (Exception ignored) {}
+
+            if (completed.compareAndSet(false, true)) {
                 runOnUiThread(onTimeout);
             }
-        }).start();
+        });
+        thread.start();
 
-        new android.os.Handler(getMainLooper()).postDelayed(onTimeout, 5000);
+        // Timeout 5s
+        new android.os.Handler(getMainLooper()).postDelayed(() -> {
+            if (completed.compareAndSet(false, true)) {
+                onTimeout.run();
+            }
+        }, 5000);
     }
 }
