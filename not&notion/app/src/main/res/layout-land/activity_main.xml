@@ -55,7 +55,8 @@
             android:background="@android:color/transparent"
             android:src="@drawable/ic_user"
             android:contentDescription="@string/btnPerfil"
-            android:layout_marginBottom="16dp"/>
+            android:layout_marginBottom="16dp"
+            app:tint="@color/brown" />
 
         <!-- Botón Notes -->
         <ImageButton
@@ -63,7 +64,7 @@
             android:layout_width="56dp"
             android:layout_height="56dp"
             android:background="@android:color/transparent"
-            android:src="@drawable/icon_note"
+            android:src="@drawable/notes_icon"
             android:contentDescription="@string/desc_notes_button"
             android:layout_marginBottom="16dp"/>
 
@@ -74,7 +75,8 @@
             android:layout_height="56dp"
             android:background="@android:color/transparent"
             android:src="@drawable/ic_calendar"
-            android:contentDescription="@string/desc_calendar_button"/>
+            android:contentDescription="@string/desc_calendar_button"
+            app:tint="@color/brown" />
 
     </LinearLayout>
 
