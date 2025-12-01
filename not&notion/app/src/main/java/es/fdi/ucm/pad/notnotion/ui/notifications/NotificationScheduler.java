@@ -20,7 +20,7 @@ public class NotificationScheduler {
     private static final String TAG = "NotificationScheduler";
 
     /**
-     * Programa todas las notificaciones de un evento (previas + momento)
+     * Programa todas las notificaciones de un evento
      */
     public static void scheduleNotifications(Context context, CalendarEvent event) {
 
@@ -55,8 +55,6 @@ public class NotificationScheduler {
 
     /**
      * Programa una notificación usando ELAPSED_REALTIME_WAKEUP
-     *
-     * @param targetTimeMillis Tiempo absoluto (System.currentTimeMillis) en que debe disparar
      */
     private static void scheduleNotificationElapsed(
             Context context,
@@ -112,10 +110,7 @@ public class NotificationScheduler {
                 );
             }
 
-            Log.d(TAG, "Notificación programada (ELAPSED_REALTIME): " + event.getTitle() +
-                    "\n   Disparará en: " + (delayMillis / 1000) + " segundos" +
-                    "\n   Hora objetivo: " + new java.util.Date(targetTimeMillis) +
-                    "\n   ElapsedRealtime: " + triggerAtElapsed);
+            Log.d(TAG, "Notificación programada (ELAPSED_REALTIME)");
 
         } catch (SecurityException e) {
             Log.e(TAG, "Permiso SCHEDULE_EXACT_ALARM denegado", e);
@@ -123,8 +118,7 @@ public class NotificationScheduler {
     }
 
     /**
-     * Programa la alarma en el momento exacto del evento
-     * Usa setAlarmClock para MÁXIMA PRECISIÓN
+     * Programa la alarma en el momento del evento
      */
     private static void scheduleEventTimeAlarm(Context context, CalendarEvent event, long eventTimeMillis) {
 
@@ -176,8 +170,7 @@ public class NotificationScheduler {
                 alarmManager.setAlarmClock(alarmClockInfo, pendingIntent);
 
                 Log.d(TAG, "ALARMA programada con setAlarmClock: " + event.getTitle() +
-                        "\n   Hora exacta: " + new java.util.Date(eventTimeMillis) +
-                        "\n   ⚠Máxima prioridad - Ignora restricciones");
+                        "\n   Hora exacta: " + new java.util.Date(eventTimeMillis));
             } else {
                 alarmManager.setExact(
                         AlarmManager.RTC_WAKEUP,
@@ -315,10 +308,7 @@ public class NotificationScheduler {
                 );
             }
 
-            Log.d(TAG, "🔁 Alarma POSPUESTA programada (ELAPSED_REALTIME): " + event.getTitle() +
-                    "\n   Disparará en: " + (delayMillis / 1000) + " segundos (" + (delayMillis / 60000) + " min)" +
-                    "\n   Snooze #" + event.getSnoozeCount() +
-                    "\n   ElapsedRealtime: " + triggerAtElapsed);
+            Log.d(TAG, "Alarma POSPUESTA programada (ELAPSED_REALTIME): ");
 
         } catch (SecurityException e) {
             Log.e(TAG, "Permiso SCHEDULE_EXACT_ALARM denegado", e);

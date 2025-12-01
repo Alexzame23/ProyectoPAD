@@ -37,10 +37,10 @@ public class NotificationReceiver extends BroadcastReceiver {
                     eventTitle,
                     eventDescription != null ? eventDescription : "",
                     soundType != null ? soundType : "alarm",
-                    isSnoozed // ✅ Pasar flag
+                    isSnoozed
             );
         } else {
-            // Notificación previa (recordatorio)
+            // Notificación previa
             NotificationHelper.showEventNotification(
                     context,
                     eventId,

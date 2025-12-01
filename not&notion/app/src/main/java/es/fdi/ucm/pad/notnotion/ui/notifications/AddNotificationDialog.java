@@ -83,7 +83,7 @@ public class AddNotificationDialog extends Dialog {
         String quantityStr = editQuantity.getText().toString().trim();
 
         if (quantityStr.isEmpty()) {
-            Toast.makeText(getContext(), "Introduce una cantidad", Toast.LENGTH_SHORT).show();
+            Toast.makeText(getContext(), R.string.introduce_cantidad, Toast.LENGTH_SHORT).show();
             return;
         }
 
@@ -91,11 +91,11 @@ public class AddNotificationDialog extends Dialog {
         try {
             quantity = Integer.parseInt(quantityStr);
             if (quantity <= 0) {
-                Toast.makeText(getContext(), "La cantidad debe ser mayor que 0", Toast.LENGTH_SHORT).show();
+                Toast.makeText(getContext(), R.string.cantidad_mayor_cero, Toast.LENGTH_SHORT).show();
                 return;
             }
         } catch (NumberFormatException e) {
-            Toast.makeText(getContext(), "Cantidad inválida", Toast.LENGTH_SHORT).show();
+            Toast.makeText(getContext(), R.string.cantidad_invalida, Toast.LENGTH_SHORT).show();
             return;
         }
 
@@ -103,24 +103,22 @@ public class AddNotificationDialog extends Dialog {
         Notification.TimeUnit selectedUnit = getSelectedTimeUnit();
 
         if (selectedUnit == Notification.TimeUnit.MINUTES && quantity > 10080) {
-            // Más de una semana en minutos
-            Toast.makeText(getContext(), "Cantidad demasiado grande, usa una unidad mayor", Toast.LENGTH_SHORT).show();
+            Toast.makeText(getContext(), R.string.cantidad_demasiado_grande_unidad, Toast.LENGTH_SHORT).show();
             return;
         }
 
         if (selectedUnit == Notification.TimeUnit.HOURS && quantity > 168) {
-            // Más de una semana en horas
-            Toast.makeText(getContext(), "Cantidad demasiado grande, usa días o semanas", Toast.LENGTH_SHORT).show();
+            Toast.makeText(getContext(), R.string.cantidad_demasiado_grande_dias, Toast.LENGTH_SHORT).show();
             return;
         }
 
         if (selectedUnit == Notification.TimeUnit.DAYS && quantity > 365) {
-            Toast.makeText(getContext(), "Máximo 365 días", Toast.LENGTH_SHORT).show();
+            Toast.makeText(getContext(), R.string.maximo_dias, Toast.LENGTH_SHORT).show();
             return;
         }
 
         if (selectedUnit == Notification.TimeUnit.WEEKS && quantity > 52) {
-            Toast.makeText(getContext(), "Máximo 52 semanas", Toast.LENGTH_SHORT).show();
+            Toast.makeText(getContext(), R.string.maximo_semanas, Toast.LENGTH_SHORT).show();
             return;
         }
 

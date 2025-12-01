@@ -30,7 +30,7 @@ public class NotificationHelper {
 
 
     /**
-     * Crea los canales de notificaciones (necesario para Android 8.0+)
+     * Crea los canales de notificaciones
      */
     public static void createNotificationChannel(Context context) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -73,7 +73,7 @@ public class NotificationHelper {
     }
 
     /**
-     * Muestra una notificación de recordatorio (antes del evento)
+     * Muestra una notificación de recordatorio
      */
     public static void showEventNotification(
             Context context,
@@ -126,7 +126,6 @@ public class NotificationHelper {
 
     /**
      * Muestra una ALARMA en el momento del evento
-     * Con full screen intent para pantalla completa
      */
     public static void showEventAlarm(
             Context context,
@@ -186,11 +185,11 @@ public class NotificationHelper {
         );
 
         // Construir notificación
-        String title = "⏰ " + eventTitle;
+        String title = eventTitle;
         String contentText = eventDescription.isEmpty() ? "¡Es el momento del evento!" : eventDescription;
 
         if (isSnoozed) {
-            title = "⏰🔁 " + eventTitle;
+            title = eventTitle;
             contentText = "(Pospuesto) " + contentText;
         }
 
@@ -222,7 +221,7 @@ public class NotificationHelper {
         }
 
         builder.setStyle(new NotificationCompat.BigTextStyle()
-                .bigText((isSnoozed ? "🔁 POSPUESTO\n\n" : "¡AHORA!\n\n") +
+                .bigText((isSnoozed ? "POSPUESTO\n\n" : "¡AHORA!\n\n") +
                         (eventDescription.isEmpty() ? eventTitle : eventDescription)));
 
         builder.setColor(0xFFFF0000);
@@ -245,7 +244,7 @@ public class NotificationHelper {
 
         if (manager != null) {
             manager.cancel(generateNotificationId(eventId));
-            manager.cancel(generateAlarmId(eventId)); //También cancelar alarma
+            manager.cancel(generateAlarmId(eventId));
         }
     }
 

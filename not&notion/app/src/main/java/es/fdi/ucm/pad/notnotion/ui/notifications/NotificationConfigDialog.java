@@ -136,11 +136,11 @@ public class NotificationConfigDialog extends Dialog {
 
     private void setupMaxSnoozeSpinner() {
         String[] options = new String[]{
-                "Sin límite",
-                "Máximo 1 vez",
-                "Máximo 2 veces",
-                "Máximo 3 veces",
-                "Máximo 5 veces"
+                getContext().getString(R.string.sin_limite),
+                getContext().getString(R.string.maximo_una_vez),
+                getContext().getString(R.string.maximo_dos_veces),
+                getContext().getString(R.string.maximo_tres_veces),
+                getContext().getString(R.string.maximo_cinco_veces)
         };
 
         ArrayAdapter<String> adapter = new ArrayAdapter<>(

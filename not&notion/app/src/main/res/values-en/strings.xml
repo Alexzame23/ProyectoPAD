@@ -111,5 +111,28 @@
     <string name="allow_notification">Reminders allowed</string>
     <string name="no_allow_notification">Reminders wont show</string>
 
+    <string name="introduce_cantidad">Enter an amount</string>
+    <string name="cantidad_mayor_cero">Amount must be greater than 0</string>
+    <string name="cantidad_invalida">Invalid amount</string>
+    <string name="cantidad_demasiado_grande_unidad">Amount too large, use a larger unit</string>
+    <string name="cantidad_demasiado_grande_dias">Amount too large, use days or weeks</string>
+    <string name="maximo_dias">Maximum 365 days</string>
+    <string name="maximo_semanas">Maximum 52 weeks</string>
+
+    <string name="alarma_pospuesta">Alarm snoozed</string>
+    <string name="pospuesto_veces">Snoozed %1$d time</string>
+    <string name="pospuesto_veces_plural">Snoozed %1$d times</string>
+    <string name="limite_alcanzado">Limit reached</string>
+    <string name="limite_postponimientos_alcanzado">You have reached the snooze limit</string>
+    <string name="alarma_pospuesta_minutos">Alarm snoozed 5 minutes</string>
+
+    <string name="sin_limite">No limit</string>
+    <string name="maximo_una_vez">Maximum 1 time</string>
+    <string name="maximo_dos_veces">Maximum 2 times</string>
+    <string name="maximo_tres_veces">Maximum 3 times</string>
+    <string name="maximo_cinco_veces">Maximum 5 times</string>
+
+    <string name="limite_postponimientos_evento">You have reached the snooze limit for this event</string>
+    <string name="alarma_pospuesta_con_emoji">⏰ Alarm snoozed %1$d minutes</string>
 
 </resources>

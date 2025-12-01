@@ -163,28 +163,33 @@ public class AlarmFullScreenActivity extends AppCompatActivity {
 
         // Indicador de pospuesto
         if (isSnoozed) {
-            tvSnoozeInfo.setText("🔁 Alarma pospuesta");
+            tvSnoozeInfo.setText(R.string.alarma_pospuesta);
             tvSnoozeInfo.setVisibility(View.VISIBLE);
         } else {
             tvSnoozeInfo.setVisibility(View.GONE);
         }
 
-        // Cargar evento completo desde Firebase para info adicional
+        // Cargar evento completo desde Firebase
         eventsManager.getEventById(eventId, event -> {
             if (event != null) {
                 currentEvent = event;
 
                 // Actualizar UI si hay más información
                 if (event.getSnoozeCount() > 0) {
-                    tvSnoozeInfo.setText("🔁 Pospuesto " + event.getSnoozeCount() +
-                            " vez" + (event.getSnoozeCount() > 1 ? "es" : ""));
+                    String snoozeText;
+                    if (event.getSnoozeCount() == 1) {
+                        snoozeText = getString(R.string.pospuesto_veces, event.getSnoozeCount());
+                    } else {
+                        snoozeText = getString(R.string.pospuesto_veces_plural, event.getSnoozeCount());
+                    }
+                    tvSnoozeInfo.setText(snoozeText);
                     tvSnoozeInfo.setVisibility(View.VISIBLE);
                 }
 
                 // Verificar si puede posponer
                 if (!event.canSnooze()) {
                     btnSnooze.setEnabled(false);
-                    btnSnooze.setText("Límite alcanzado");
+                    btnSnooze.setText(R.string.limite_alcanzado);
                 }
             }
         });
@@ -229,7 +234,7 @@ public class AlarmFullScreenActivity extends AppCompatActivity {
                 mediaPlayer.prepare();
                 mediaPlayer.start();
 
-                Log.d(TAG, "✅ Sonido de alarma iniciado");
+                Log.d(TAG, "Sonido de alarma iniciado");
 
             } catch (Exception e) {
                 Log.e(TAG, "Error al reproducir sonido", e);
@@ -249,7 +254,7 @@ public class AlarmFullScreenActivity extends AppCompatActivity {
             }
 
             isVibrating = true;
-            Log.d(TAG, "✅ Vibración iniciada");
+            Log.d(TAG, "Vibración iniciada");
         }
     }
 
@@ -289,10 +294,8 @@ public class AlarmFullScreenActivity extends AppCompatActivity {
         NotificationHelper.cancelEventNotifications(this, eventId);
 
         if (currentEvent != null) {
-            // Verificar si puede posponer
             if (!currentEvent.canSnooze()) {
-                NotificationHelper.showToast(this,
-                        "Has alcanzado el límite de postponimientos");
+                NotificationHelper.showToast(this, getString(R.string.limite_postponimientos_alcanzado));
                 handleDismiss();
                 return;
             }
@@ -300,15 +303,12 @@ public class AlarmFullScreenActivity extends AppCompatActivity {
             // Incrementar contador
             currentEvent.incrementSnoozeCount();
 
-            // Calcular tiempo de snooze (5 minutos)
+            // Calcular tiempo de pos
             long snoozeTimeMillis = System.currentTimeMillis() + (5 * 60 * 1000L);
 
-            // Actualizar en Firebase
             eventsManager.updateEvent(currentEvent, () -> {
-                // Programar nueva alarma
                 NotificationScheduler.scheduleSnoozeAlarm(this, currentEvent, snoozeTimeMillis);
-
-                NotificationHelper.showToast(this, "⏰ Alarma pospuesta 5 minutos");
+                NotificationHelper.showToast(this, getString(R.string.alarma_pospuesta_minutos));
                 Log.d(TAG, "Alarma pospuesta correctamente");
             });
         }

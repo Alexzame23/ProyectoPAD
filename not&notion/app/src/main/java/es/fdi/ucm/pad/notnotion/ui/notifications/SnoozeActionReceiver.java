@@ -6,24 +6,20 @@ import android.content.Intent;
 import android.util.Log;
 import android.widget.Toast;
 
+import es.fdi.ucm.pad.notnotion.R;
 import es.fdi.ucm.pad.notnotion.data.firebase.CalendarEventsManager;
 import es.fdi.ucm.pad.notnotion.data.model.CalendarEvent;
 import es.fdi.ucm.pad.notnotion.utils.NotificationHelper;
 import es.fdi.ucm.pad.notnotion.ui.notifications.NotificationScheduler;
 
 /**
- * Receiver que maneja la acción de posponer (snooze) desde la notificación
- *
- * Funcionalidad:
- * - Pospone automáticamente 5 minutos
- * - Sin diálogos ni menús
- * - Acción inmediata
+ * Receiver que maneja la acción de posponer desde la notificación
  */
 public class SnoozeActionReceiver extends BroadcastReceiver {
 
     private static final String TAG = "SnoozeActionReceiver";
 
-    // Tiempo fijo de snooze: 5 minutos
+    // Tiempo fijo 5 minutos
     private static final int SNOOZE_MINUTES = 5;
     private static final long SNOOZE_MILLIS = SNOOZE_MINUTES * 60 * 1000L;
 
@@ -47,15 +43,13 @@ public class SnoozeActionReceiver extends BroadcastReceiver {
                 return;
             }
 
-            // Verificar si puede posponer (si hay límite configurado)
             if (!event.canSnooze()) {
                 Toast.makeText(context,
-                        "Has alcanzado el límite de postponimientos para este evento",
+                        context.getString(R.string.limite_postponimientos_evento),
                         Toast.LENGTH_SHORT).show();
                 return;
             }
 
-            // ✅ Posponer inmediatamente
             handleSnooze(context, event, eventsManager);
         });
     }
@@ -65,27 +59,27 @@ public class SnoozeActionReceiver extends BroadcastReceiver {
      */
     private void handleSnooze(Context context, CalendarEvent event, CalendarEventsManager eventsManager) {
 
-        // 1. Cancelar la notificación actual
+        // Cancelar la notificación actual
         NotificationHelper.cancelEventNotifications(context, event.getId());
 
-        // 2. Incrementar contador de snooze
+        // Incrementar contador de pos
         event.incrementSnoozeCount();
 
-        // 3. Calcular tiempo de nueva alarma (ahora + 5 minutos)
+        // Calcular tiempo de nueva alarma
         long snoozeTimeMillis = System.currentTimeMillis() + SNOOZE_MILLIS;
 
-        // 4. Actualizar evento en Firebase
+        // Actualizar evento en Firebase
         eventsManager.updateEvent(event, () -> {
 
-            // 5. Programar nueva alarma
+            // Programar nueva alarma
             NotificationScheduler.scheduleSnoozeAlarm(context, event, snoozeTimeMillis);
 
-            // 6. Mostrar confirmación al usuario
+            // Mostrar confirmación al usuario
             Toast.makeText(context,
-                    "⏰ Alarma pospuesta " + SNOOZE_MINUTES + " minutos",
+                    "Alarma pospuesta " + SNOOZE_MINUTES + " minutos",
                     Toast.LENGTH_SHORT).show();
 
-            Log.d(TAG, "✅ Alarma pospuesta correctamente" +
+            Log.d(TAG, "Alarma pospuesta correctamente" +
                     "\n   Evento: " + event.getTitle() +
                     "\n   Snooze #" + event.getSnoozeCount() +
                     "\n   Próxima alarma: " + new java.util.Date(snoozeTimeMillis));

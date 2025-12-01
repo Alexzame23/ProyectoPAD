@@ -111,5 +111,29 @@
 
     <string name="title_mandatory">El titulo es obligatorio</string>
 
+    <string name="introduce_cantidad">Introduce una cantidad</string>
+    <string name="cantidad_mayor_cero">La cantidad debe ser mayor que 0</string>
+    <string name="cantidad_invalida">Cantidad inválida</string>
+    <string name="cantidad_demasiado_grande_unidad">Cantidad demasiado grande, usa una unidad mayor</string>
+    <string name="cantidad_demasiado_grande_dias">Cantidad demasiado grande, usa días o semanas</string>
+    <string name="maximo_dias">Máximo 365 días</string>
+    <string name="maximo_semanas">Máximo 52 semanas</string>
+
+    <string name="alarma_pospuesta">Alarma pospuesta</string>
+    <string name="pospuesto_veces">Pospuesto %1$d vez</string>
+    <string name="pospuesto_veces_plural">Pospuesto %1$d veces</string>
+    <string name="limite_alcanzado">Límite alcanzado</string>
+    <string name="limite_postponimientos_alcanzado">Has alcanzado el límite de postponimientos</string>
+    <string name="alarma_pospuesta_minutos">Alarma pospuesta 5 minutos</string>
+
+    <string name="sin_limite">Sin límite</string>
+    <string name="maximo_una_vez">Máximo 1 vez</string>
+    <string name="maximo_dos_veces">Máximo 2 veces</string>
+    <string name="maximo_tres_veces">Máximo 3 veces</string>
+    <string name="maximo_cinco_veces">Máximo 5 veces</string>
+
+    <string name="limite_postponimientos_evento">Has alcanzado el límite de postponimientos para este evento</string>
+    <string name="alarma_pospuesta_con_emoji">⏰ Alarma pospuesta %1$d minutos</string>
+
 
 </resources>

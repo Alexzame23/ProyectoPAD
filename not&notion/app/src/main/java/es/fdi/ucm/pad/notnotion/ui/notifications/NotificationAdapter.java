@@ -86,7 +86,7 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
         }
 
         public void bind(Notification item, int position) {
-            tvNotificationText.setText("🔔 " + item.getDisplayText());
+            tvNotificationText.setText(item.getDisplayText());
 
             btnDelete.setOnClickListener(v -> {
                 if (deleteListener != null) {
