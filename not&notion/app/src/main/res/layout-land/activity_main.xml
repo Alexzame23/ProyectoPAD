@@ -55,8 +55,7 @@
             android:background="@android:color/transparent"
             android:src="@drawable/ic_user"
             android:contentDescription="@string/btnPerfil"
-            android:layout_marginBottom="16dp"
-            app:tint="@color/brown" />
+            android:layout_marginBottom="16dp" />
 
         <!-- Botón Notes -->
         <ImageButton
